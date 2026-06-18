@@ -1,11 +1,11 @@
+HTML
 <!DOCTYPE html>
 <html lang="zh-Hant">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Volume Tool PRO｜修正版最終版</title>
+  <title>Volume Tool </title>
 
-  <!-- Excel 解析 -->
   <script src="https://cdn.jsdelivr.net/npm/xlsx/dist/xlsx.full.min.js"></script>
 
   <style>
@@ -24,7 +24,7 @@
       --success:#059669;
       --warning:#d97706;
       --danger:#dc2626;
-      --shadow:0 12px 30px rgba(15,23,42,.08);
+      --shadow:0 12px 30px rgba(0, 0, 0, 0.08);
       --result:#f9fbff;
       --thead:#eef4ff;
       --drop:#f8fbff;
@@ -32,6 +32,12 @@
       --sidebar:#ffffff;
       --sidebar-hover:#edf4ff;
       --sidebar-active:#dbeafe;
+      
+      /* 智慧提示顏色 - 日間模式 */
+      --warn-100: #fef08a; /* 淺黃 */
+      --warn-100-text: #854d0e;
+      --warn-300: #fca5a5; /* 淺紅 */
+      --warn-300-text: #991b1b;
     }
 
     body.dark{
@@ -57,6 +63,12 @@
       --sidebar:#111827;
       --sidebar-hover:#172235;
       --sidebar-active:#1d4f91;
+
+      /* 智慧提示顏色 - 夜間模式 */
+      --warn-100: #713f12; /* 深黃 */
+      --warn-100-text: #fef08a;
+      --warn-300: #7f1d1d; /* 深紅 */
+      --warn-300-text: #fca5a5;
     }
 
     *{ box-sizing:border-box; }
@@ -423,6 +435,20 @@
       border-radius:10px;
       padding:0 8px;
       text-align:center;
+      transition: background-color 0.2s ease, color 0.2s ease;
+    }
+
+    /* 尺寸智慧變色樣式 */
+    td input.warn-yellow {
+      background-color: var(--warn-100) !important;
+      color: var(--warn-100-text) !important;
+      border-color: var(--warning) !important;
+    }
+
+    td input.warn-red {
+      background-color: var(--warn-300) !important;
+      color: var(--warn-300-text) !important;
+      border-color: var(--danger) !important;
     }
 
     .muted{
@@ -502,7 +528,6 @@
 </head>
 <body>
 <div class="app">
-  <!-- Sidebar -->
   <aside class="sidebar">
     <div class="brand">
       <div class="brand-logo">V</div>
@@ -532,12 +557,11 @@
     </button>
   </aside>
 
-  <!-- Main -->
   <main class="main">
     <div class="page">
       <div class="header">
         <div class="title">
-          <h1>Volume Tool PRO｜修正版最終版</h1>
+          <h1>Volume Tool</h1>
           <div class="sub">
             預設為手動輸入；左側可切換貼入資料 / Excel 匯入。系統會記住你上次使用的模式與主題。
           </div>
@@ -553,7 +577,6 @@
         </div>
       </div>
 
-      <!-- 總計資訊 -->
       <div class="card">
         <div class="card-head">
           <h2>總計資訊</h2>
@@ -636,12 +659,11 @@
         </div>
       </div>
 
-      <!-- 手動輸入 -->
       <div id="manualArea" class="mode-panel active">
         <div class="card">
           <div class="card-head">
             <h2>手動輸入表格</h2>
-            <div class="muted">預設模式｜箱數 = DIM 後面的數字</div>
+            <div class="muted">預設模式｜箱數 = DIM 後面的數字｜⚡ 尺寸 $\ge$ 100 變黃，$\ge$ 300 變紅</div>
           </div>
           <div class="card-body">
             <div class="btns" style="margin-bottom:14px;">
@@ -682,7 +704,6 @@
         </div>
       </div>
 
-      <!-- 貼入資料 -->
       <div id="pasteArea" class="mode-panel">
         <div class="card">
           <div class="card-head">
@@ -715,7 +736,6 @@
         </div>
       </div>
 
-      <!-- Excel 匯入 -->
       <div id="excelArea" class="mode-panel">
         <div class="card">
           <div class="card-head">
@@ -747,7 +767,6 @@
         </div>
       </div>
 
-      <!-- 輸出結果 -->
       <div class="card">
         <div class="card-head">
           <h2>輸出結果</h2>
@@ -917,6 +936,17 @@ VOL.2760.0K"></textarea>
     updateThemeText();
   }
 
+  /* 尺寸智慧提示變色邏輯 */
+  function checkInputColor(inputEl){
+    const val = parseFloat(inputEl.value) || 0;
+    inputEl.classList.remove("warn-yellow", "warn-red");
+    if (val >= 300) {
+      inputEl.classList.add("warn-red");
+    } else if (val >= 100) {
+      inputEl.classList.add("warn-yellow");
+    }
+  }
+
   function addRow(values = null){
     rowCount++;
 
@@ -947,8 +977,39 @@ VOL.2760.0K"></textarea>
       inputs[1].value = values.w ?? "";
       inputs[2].value = values.h ?? "";
       inputs[3].value = values.boxCount ?? values.pcs ?? "";
+      
+      // 計算並自動觸發變色檢查
       calc(inputs[0]);
     }
+  }
+
+  function deleteLastRow(){
+    const tbody = document.getElementById("tbody");
+    if(tbody.children.length > 1) {
+      tbody.removeChild(tbody.lastChild);
+      rowCount--;
+      total();
+    } else if(tbody.children.length === 1) {
+      // 如果只剩一行就清空它而不是刪除它
+      const inputs = tbody.querySelectorAll("input");
+      inputs.forEach(i => { i.value = ""; i.className = ""; });
+      total();
+    }
+  }
+
+  function clearAll(confirmNeeded = true) {
+    if (confirmNeeded && !confirm("確定要清空全部資料嗎？")) return;
+    document.getElementById("tbody").innerHTML = "";
+    rowCount = 0;
+    addRow(); // 確保清空後只留 1 行
+    total();
+  }
+
+  function recalcAll() {
+    document.querySelectorAll("#tbody tr").forEach(tr => {
+      const inputs = tr.querySelectorAll("input");
+      if(inputs.length > 0) calc(inputs[0]);
+    });
   }
 
   function getInputsInRow(tr){
@@ -993,6 +1054,11 @@ VOL.2760.0K"></textarea>
     const tr = el.closest("tr");
     const inputs = tr.querySelectorAll("input");
 
+    // 即時檢查並套用尺寸變色（僅針對 L, W, H 欄位）
+    checkInputColor(inputs[0]);
+    checkInputColor(inputs[1]);
+    checkInputColor(inputs[2]);
+
     let l = ceilNum(inputs[0].value);
     let w = ceilNum(inputs[1].value);
     let h = ceilNum(inputs[2].value);
@@ -1021,6 +1087,11 @@ VOL.2760.0K"></textarea>
     inputs[2].value = h;
     inputs[3].value = boxCount;
 
+    // 格式化重設數值後再次檢查變色
+    checkInputColor(inputs[0]);
+    checkInputColor(inputs[1]);
+    checkInputColor(inputs[2]);
+
     const cu = l * w * h * boxCount;
     const vol = cu / factor;
     const cbm = cu / 1000000;
@@ -1039,6 +1110,7 @@ VOL.2760.0K"></textarea>
     const rows = [];
     document.querySelectorAll("#tbody tr").forEach(tr => {
       const inputs = tr.querySelectorAll("input");
+      if(inputs.length < 4) return;
       const l = ceilNum(inputs[0].value);
       const w = ceilNum(inputs[1].value);
       const h = ceilNum(inputs[2].value);
@@ -1101,6 +1173,7 @@ VOL.2760.0K"></textarea>
 
     document.querySelectorAll("#tbody tr").forEach(tr => {
       const inputs = tr.querySelectorAll("input");
+      if(inputs.length < 4) return;
       const l = ceilNum(inputs[0].value);
       const w = ceilNum(inputs[1].value);
       const h = ceilNum(inputs[2].value);
@@ -1337,7 +1410,7 @@ VOL.2760.0K"></textarea>
       });
     });
 
-    addRow();
+    addRow(); // 尾端留空行方便使用者繼續輸入
     total();
 
     if (statusTargetId) {
@@ -1523,7 +1596,8 @@ VOL.2760.0K"></textarea>
     initTheme();
     bindDropZone();
 
-    for (let i = 0; i < 5; i++) addRow();
+    // 預設修改為只顯示 1 行
+    addRow();
     total();
 
     const savedMode = localStorage.getItem(MODE_KEY) || "manual";
