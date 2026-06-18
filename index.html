@@ -1,4 +1,3 @@
-HTML
 <!DOCTYPE html>
 <html lang="zh-Hant">
 <head>
@@ -719,11 +718,13 @@ HTML
 1) 橫向 TAB 表格（含欄位名稱最佳）
 2) 直式資料（每欄一行）
 3) 簡單尺寸 + 件數 + 重量，例如：
-60*50*40    19    17955    19155"></textarea>
+60*50*40    19    17955    19155
+或 
+60X50X40CM/16"></textarea>
 
             <div class="note">
               優先辨識欄位：<code>大箱尺寸(cm)</code>、<code>包裹個數</code>、<code>包裹重量之和(g)</code>、<code>毛重(g)</code>。<br>
-              <strong>注意：</strong>「包裹個數」只會統計到 <code>TOTAL 包裹個數</code>，不會當成 DIM 後面的箱數。
+              <strong>注意：</strong>若使用含有斜線的格式（如 <code>60X50X40CM/16</code>），系統會自動將 16 識別為該尺寸的<strong>箱數</strong>。
             </div>
 
             <div class="btns" style="margin-top:14px;">
@@ -886,15 +887,18 @@ VOL.2760.0K"></textarea>
       .replace(/\s+/g, "")
       .trim();
 
-    const m = s.match(/(\d+(?:\.\d+)?)\*(\d+(?:\.\d+)?)\*(\d+(?:\.\d+)?)/);
+    // 支援匹配斜線後的箱數，如 60*50*40/16
+    const m = s.match(/(\d+(?:\.\d+)?)\*(\d+(?:\.\d+)?)\*(\d+(?:\.\d+)?)(?:\/(\d+))?/);
     if (!m) return null;
 
     const l = Math.ceil(parseFloat(m[1]));
     const w = Math.ceil(parseFloat(m[2]));
     const h = Math.ceil(parseFloat(m[3]));
+    const inferredBoxCount = m[4] ? parseInt(m[4], 10) : null;
+    
     if (!l || !w || !h) return null;
 
-    return { l, w, h, key: `${l}|${w}|${h}` };
+    return { l, w, h, inferredBoxCount, key: `${l}|${w}|${h}` };
   }
 
   function parsePositiveInt(val, fallback=0){
@@ -1284,7 +1288,7 @@ VOL.2760.0K"></textarea>
       resultRows.push({
         provider,
         size: sizeObj,
-        boxCount: 1,
+        boxCount: sizeObj.inferredBoxCount !== null ? sizeObj.inferredBoxCount : 1,
         packageCount,
         pkgkg,
         grosskg
@@ -1324,7 +1328,7 @@ VOL.2760.0K"></textarea>
       resultRows.push({
         provider:"",
         size:sizeObj,
-        boxCount:1,
+        boxCount: sizeObj.inferredBoxCount !== null ? sizeObj.inferredBoxCount : 1,
         packageCount,
         pkgkg,
         grosskg
@@ -1346,18 +1350,28 @@ VOL.2760.0K"></textarea>
       const sizeObj = parseSize(line);
       if (!sizeObj) continue;
 
-      const m = line.match(/(\d+(?:\.\d+)?)\*(\d+(?:\.\d+)?)\*(\d+(?:\.\d+)?)/);
-      const tail = m ? line.slice(line.indexOf(m[0]) + m[0].length) : "";
-      const nums = tail.match(/\d+/g) || [];
+      // 如果有包含斜線而且已經被 sizeObj 辨識，就不重複往後抓數字
+      let boxCount = 1;
+      let packageCount = 0;
+      let pkgkg = 0;
+      let grosskg = 0;
 
-      const packageCount = nums[0] ? parsePositiveInt(nums[0], 0) : 0;
-      const pkgkg = nums[1] ? (parsePositiveInt(nums[1], 0) / 1000) : 0;
-      const grosskg = nums[2] ? (parsePositiveInt(nums[2], 0) / 1000) : 0;
+      if (sizeObj.inferredBoxCount !== null) {
+        boxCount = sizeObj.inferredBoxCount;
+      } else {
+        const m = line.match(/(\d+(?:\.\d+)?)\*(\d+(?:\.\d+)?)\*(\d+(?:\.\d+)?)/);
+        const tail = m ? line.slice(line.indexOf(m[0]) + m[0].length) : "";
+        const nums = tail.match(/\d+/g) || [];
+
+        packageCount = nums[0] ? parsePositiveInt(nums[0], 0) : 0;
+        pkgkg = nums[1] ? (parsePositiveInt(nums[1], 0) / 1000) : 0;
+        grosskg = nums[2] ? (parsePositiveInt(nums[2], 0) / 1000) : 0;
+      }
 
       resultRows.push({
         provider:"",
         size:sizeObj,
-        boxCount:1,
+        boxCount: boxCount,
         packageCount,
         pkgkg,
         grosskg
@@ -1502,7 +1516,7 @@ VOL.2760.0K"></textarea>
       resultRows.push({
         provider,
         size: sizeObj,
-        boxCount: 1,
+        boxCount: sizeObj.inferredBoxCount !== null ? sizeObj.inferredBoxCount : 1,
         packageCount,
         pkgkg,
         grosskg
