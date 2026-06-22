@@ -1,0 +1,2962 @@
+<!DOCTYPE html>
+<html lang="zh-Hant-TW">
+8" /><head>
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>UTK Full Pro MAX MERGED (Cards + MultiPage + Image + Groups + Base→Header)</title>
+
+  <!-- pdf-lib -->
+  <script src="https://unpkg.com/pdf-lib@1.17.1/dist/pdf-lib.min.js"></script>
+  <!-- fontkit -->
+  <script src="https://unpkg.com/@pdf-lib/fontkit@1.1.1/dist/fontkit.umd.min.js"></script>
+  <!-- JSZip -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+  <!-- PapaParse -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
+  <!-- SheetJS -->
+  <script src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js"></script>
+  <!-- PDF.js -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.min.js"></script>
+  <script>
+    pdfjsLib.GlobalWorkerOptions.workerSrc =
+      "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.worker.min.js";
+  </script>
+
+  <style>
+    :root{
+      --bg:#0b1220; --panel:#0f172a; --text:#e5e7eb; --muted:#a3aab8;
+      --border:rgba(148,163,184,.16); --brand:#3b82f6; --brand2:#60a5fa;
+      --danger:#ef4444; --shadow:0 18px 60px rgba(0,0,0,.35);
+      --radius:16px; --inputBg: rgba(15,23,42,.55);
+      --overlay: rgba(239,68,68,.92); --overlayStroke: rgba(0,0,0,.35);
+
+      /* group drop highlight */
+      --dropHover: rgba(59,130,246,.18);
+      --dropBorder: rgba(59,130,246,.55);
+    }
+    body.light{
+      --bg:#f4f6fb; --panel:#ffffff; --text:#0f172a; --muted:#5b6473;
+      --border:#e5e7eb; --shadow:0 10px 30px rgba(16,24,40,.08);
+      --inputBg: rgba(255,255,255,.9);
+      --overlay: rgba(220,38,38,.92); --overlayStroke: rgba(255,255,255,.45);
+
+      --dropHover: rgba(59,130,246,.10);
+      --dropBorder: rgba(59,130,246,.45);
+    }
+    *{box-sizing:border-box}
+    body{
+      margin:0;
+      font-family: system-ui, -apple-system, "Segoe UI", "Noto Sans TC", Arial, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+    }
+    .app{display:grid; grid-template-columns: 280px 1fr; min-height:100vh;}
+    .sidebar{
+      position:sticky; top:0; height:100vh;
+      border-right:1px solid var(--border);
+      padding:16px 14px;
+      background: linear-gradient(180deg, rgba(255,255,255,.05), rgba(255,255,255,0));
+    }
+    .brand{
+      border:1px solid var(--border);
+      border-radius:14px;
+      padding:12px;
+      background: rgba(255,255,255,.04);
+      box-shadow: var(--shadow);
+      margin-bottom:12px;
+    }
+    .brand b{display:block; font-size:14px;}
+    .brand span{display:block; font-size:12px; color:var(--muted); margin-top:4px; line-height:1.4;}
+    .nav{display:flex; flex-direction:column; gap:8px; margin-top:10px;}
+    .nav button{
+      width:100%;
+      padding:10px 12px;
+      border-radius:12px;
+      border:1px solid var(--border);
+      background: rgba(255,255,255,.03);
+      color: var(--text);
+      cursor:pointer;
+      font-weight:900;
+      text-align:left;
+      display:flex; justify-content:space-between; align-items:center;
+    }
+    .nav button.active{
+      background: rgba(59,130,246,.18);
+      border-color: rgba(59,130,246,.55);
+    }
+    .badge{
+      font-size:11px;
+      color: var(--muted);
+      border:1px solid var(--border);
+      padding:3px 8px;
+      border-radius:999px;
+      background: rgba(255,255,255,.03);
+    }
+    .main{padding:18px 18px 26px;}
+    .panel{
+      border:1px solid var(--border);
+      border-radius: var(--radius);
+      background: rgba(255,255,255,.03);
+      box-shadow: var(--shadow);
+      overflow:hidden;
+    }
+    .panel-hd{
+      padding:14px 16px;
+      border-bottom:1px solid var(--border);
+      display:flex; justify-content:space-between; align-items:center;
+      background: linear-gradient(180deg, rgba(59,130,246,.12), rgba(255,255,255,0));
+    }
+    .panel-hd h3{margin:0; font-size:14px;}
+    .panel-bd{padding:16px;}
+    label{display:block; font-size:12px; color:var(--muted); margin:10px 0 6px; font-weight:900;}
+    input, select, textarea{
+      width:100%;
+      padding:10px 12px;
+      border-radius:12px;
+      border:1px solid var(--border);
+      background: var(--inputBg);
+      color: var(--text);
+      outline:none;
+      font-size:14px;
+    }
+    textarea{min-height:110px; resize:vertical; font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;}
+    .row2{display:grid; grid-template-columns:1fr 1fr; gap:12px;}
+    .row3{display:grid; grid-template-columns:1fr 1fr 1fr; gap:10px;}
+    @media (max-width: 980px){
+      .app{grid-template-columns: 1fr;}
+      .sidebar{position:static;height:auto;}
+      .row2,.row3{grid-template-columns:1fr;}
+    }
+    .btns{display:flex; gap:10px; flex-wrap:wrap; margin-top:12px;}
+    .action{
+      border:1px solid var(--border);
+      background: rgba(255,255,255,.06);
+      color: var(--text);
+      padding:10px 12px;
+      border-radius:12px;
+      cursor:pointer;
+      font-weight:900;
+      user-select:none;
+    }
+    .action.primary{background: var(--brand); border-color:transparent; color:#fff;}
+    .action.danger{background: var(--danger); border-color:transparent; color:#fff;}
+    .action:disabled{opacity:.55; cursor:not-allowed;}
+    .status{
+      margin-top:10px;
+      padding:10px 12px;
+      border-radius:12px;
+      border:1px solid var(--border);
+      background: rgba(255,255,255,.03);
+      color: var(--muted);
+      font-size:12.5px;
+      line-height:1.5;
+      display:flex; gap:10px; align-items:flex-start;
+    }
+    .status.ok{border-color: rgba(34,197,94,.35); background: rgba(34,197,94,.10); color: var(--text);}
+    .status.bad{border-color: rgba(239,68,68,.35); background: rgba(239,68,68,.10); color: var(--text);}
+    .divider{height:1px; background: var(--border); margin:14px 0;}
+    .tiny{font-size:12px; color:var(--muted); line-height:1.55;}
+    .mono{font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;}
+
+    /* template library cards */
+    .libToolbar{display:grid; grid-template-columns: 1fr 180px 180px; gap:10px; margin-top:10px;}
+    .libGrid{display:grid; grid-template-columns:repeat(auto-fill,minmax(200px,1fr)); gap:12px; margin-top:12px;}
+    .libCard{
+      border:1px solid var(--border);
+      border-radius:14px;
+      overflow:hidden;
+      background: rgba(255,255,255,.03);
+      cursor:pointer;
+      transition:.15s transform;
+    }
+    .libCard:hover{transform: translateY(-2px);}
+    .thumb{width:100%; height:140px; background: rgba(255,255,255,.04); display:flex; align-items:center; justify-content:center; overflow:hidden;}
+    .thumb img{width:100%; height:100%; object-fit:cover;}
+    .libMeta{padding:10px 10px 12px;}
+    .libMeta b{display:block;}
+    .libMeta .tiny{margin-top:4px;}
+
+    /* Preview canvas + tabs */
+    #pageTabs{display:flex; gap:8px; flex-wrap:wrap; margin:10px 0;}
+    #pageTabs button.active{background: var(--brand); border-color: transparent; color:#fff;}
+    canvas{width:100%; border:1px solid var(--border); border-radius:12px; background: rgba(255,255,255,.02);}
+
+    /* Drag rows */
+    .dragRow{border:1px solid rgba(148,163,184,.16);border-radius:12px;padding:10px;background:rgba(255,255,255,.03)}
+    .dragRow[draggable="true"]{cursor:grab}
+    .dragRow.dragging{opacity:.6}
+
+    /* Group drop zones (Header / Body / Footer) */
+    .groupZone{
+      border:1px dashed rgba(148,163,184,.35);
+      border-radius:14px;
+      padding:10px;
+      margin-top:12px;
+      transition:.12s;
+    }
+    .groupZoneTitle{font-weight:900;color:var(--brand2);margin:0 0 8px}
+    .groupZone.drop-hover{
+      background: var(--dropHover);
+      border-color: var(--dropBorder);
+      box-shadow: 0 0 0 4px rgba(59,130,246,.12) inset;
+    }
+    .groupZone.drop-flash{animation: dropflash .18s ease-out}
+    @keyframes dropflash{
+      0%{transform:scale(1);}
+      60%{transform:scale(1.01);}
+      100%{transform:scale(1);}
+    }
+  </style>
+</head>
+
+<body>
+<div class="app">
+  <aside class="sidebar">
+    <div class="brand">
+      <b>UTK Full Pro MAX MERGED</b>
+      <span>卡片模板庫（縮圖/搜尋/分類）+ 多頁 Preview + 圖片欄位 + 分組拖放 + 跨頁拖曳 + Base→Header 一鍵</span>
+    </div>
+    <div class="nav">
+      <button class="tab active" data-tab="import"><span>📥 匯入</span><span class="badge">常用</span></button>
+      <button class="tab" data-tab="template"><span>📄 範本 / 模板庫</span><span class="badge">卡片</span></button>
+      <button class="tab" data-tab="font"><span>🈶 字型</span><span class="badge">CJK</span></button>
+      <button class="tab" data-tab="ra"><span>🏷️ RA</span><span class="badge">管理</span></button>
+      <button class="tab" data-tab="fields"><span>🧩 欄位</span><span class="badge">分組</span></button>
+      <button class="tab" data-tab="preview"><span>🖱️ 預覽</span><span class="badge">跨頁拖曳</span></button>
+      <button class="tab" data-tab="export"><span>📦 匯出</span><span class="badge">ZIP</span></button>
+    </div>
+    <div class="btns" style="margin-top:12px;">
+      <button class="action" id="btnTheme">🌙 / ☀️ 主題切換</button>
+    </div>
+    <div class="status" style="margin-top:12px;">
+      <div>ℹ️</div>
+      <div>
+        建議用 <span class="mono">python -m http.server</span> 開啟。<br>
+        字型免上傳：<span class="mono">fonts/utk-font.ttf</span>
+      </div>
+    </div>
+  </aside>
+
+  <main class="main">
+    <section class="panel">
+      <div class="panel-hd">
+        <h3 id="panelTitle">📥 匯入</h3>
+        <span class="badge" id="panelBadge">Import</span>
+      </div>
+
+      <div class="panel-bd">
+
+        <!-- IMPORT -->
+        <div class="panelView" id="view_import">
+          <div class="row3">
+            <div>
+              <label>共用 Company</label>
+              <input id="assignorName" type="text" />
+            </div>
+            <div>
+              <label>共用 RA Code</label>
+              <input id="raCode" type="text" placeholder="RA00993"/>
+            </div>
+            <div>
+              <label>共用 Date</label>
+              <input id="docDate" type="date" />
+            </div>
+          </div>
+
+          <div class="row3">
+            <div>
+              <label>日期格式</label>
+              <select id="dateFormat">
+                <option value="DD/MM/YYYY">DD/MM/YYYY</option>
+                <option value="YYYY-MM-DD">YYYY-MM-DD</option>
+                <option value="MM/DD/YYYY">MM/DD/YYYY</option>
+              </select>
+            </div>
+            <div>
+              <label>資料來源</label>
+              <select id="dataMode">
+                <option value="awb">AWB 清單</option>
+                <option value="csv">CSV</option>
+                <option value="xlsx">Excel</option>
+              </select>
+            </div>
+            <div>
+              <label>ZIP 名稱（可不填）</label>
+              <input id="zipName" type="text" placeholder="UTK_2026-05-27"/>
+            </div>
+          </div>
+
+          <!-- template download buttons -->
+          <div class="btns" style="margin-top:10px;">
+            <button class="action" id="btnDownloadCsvTemplate">CSV 模板下載（含自訂欄位）</button>
+            <button class="action" id="btnDownloadExcelTemplate">Excel 模板下載（含自訂欄位）</button>
+          </div>
+
+          <div id="mode_awb">
+            <label>AWB 清單（最多 1000）</label>
+            <textarea id="awbList" placeholder="160-00779634&#10;160-00781314"></textarea>
+          </div>
+
+          <div id="mode_csv" style="display:none;">
+            <div class="row2">
+              <div>
+                <label>上載 CSV</label>
+                <input id="csvFile" type="file" accept=".csv,text/csv"/>
+              </div>
+              <div>
+                <label>或貼 CSV</label>
+                <textarea id="csvText" placeholder="awbNo,assignorName,raCode,docDate,invoiceNo&#10;160-00779634,Nippon Express (HK) Co. Ltd.,RA00993,2026-05-27,INV001"></textarea>
+              </div>
+            </div>
+          </div>
+
+          <div id="mode_xlsx" style="display:none;">
+            <label>上載 Excel (.xlsx)</label>
+            <input id="xlsxFile" type="file" accept=".xlsx,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"/>
+            <div class="status" id="awbMapStatus" style="display:none;"></div>
+            <div class="tiny">航班總匯（含 MAWB + UTK RA#/RACODE）會自動建立 AWB→RA 對照表並填入 AWB 清單。</div>
+          </div>
+
+          <div class="btns">
+            <button class="action" id="btnAnalyze">分析</button>
+            <button class="action" id="btnApplyAwbMap">套用 AWB→RA</button>
+            <button class="action" id="btnOpenPreview">開啟預覽</button>
+          </div>
+
+          <div class="status" id="runStatus" style="display:none;"></div>
+
+          <label>資料預覽（前10）</label>
+          <div style="overflow:auto;border:1px solid var(--border);border-radius:12px;">
+            <table style="width:100%;border-collapse:collapse;font-size:12px;">
+              <thead>
+                <tr style="background:rgba(255,255,255,.03);color:var(--muted);">
+                  <th style="padding:10px;border-bottom:1px solid var(--border);text-align:left;">#</th>
+                  <th style="padding:10px;border-bottom:1px solid var(--border);text-align:left;">awbNo</th>
+                  <th style="padding:10px;border-bottom:1px solid var(--border);text-align:left;">company</th>
+                  <th style="padding:10px;border-bottom:1px solid var(--border);text-align:left;">ra</th>
+                  <th style="padding:10px;border-bottom:1px solid var(--border);text-align:left;">date</th>
+                </tr>
+              </thead>
+              <tbody id="previewTbody"></tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- TEMPLATE / LIBRARY -->
+        <div class="panelView" id="view_template" style="display:none;">
+          <div class="status">
+            <div>📁</div>
+            <div>模板庫：保存「PDF + 設定」，並提供縮圖卡片、搜尋、分類、點擊切換。</div>
+          </div>
+
+          <div class="divider"></div>
+
+          <div class="row2">
+            <div>
+              <label>載入範本 PDF</label>
+              <input id="tplFile" type="file" accept=".pdf,application/pdf"/>
+              <div class="btns">
+                <button class="action primary" id="btnCacheTpl">存入快取</button>
+                <button class="action" id="btnLoadTplCache">從快取載入</button>
+                <button class="action danger" id="btnClearTplCache">清除快取</button>
+              </div>
+              <div class="status" id="tplStatus" style="display:none;"></div>
+            </div>
+
+            <div>
+              <label>輸出檔名標籤（##TAG）</label>
+              <input id="tplTag" type="text" placeholder="UTK"/>
+              <label style="margin-top:10px;">Template Export / Import</label>
+              <div class="btns" style="margin-top:0;">
+                <button class="action" id="btnExportConfig">匯出 JSON</button>
+                <button class="action" id="btnExportBundle">匯出 ZIP(PDF+JSON)</button>
+                <button class="action" id="btnImportConfig">匯入 JSON</button>
+                <button class="action" id="btnImportBundle">匯入 ZIP</button>
+              </div>
+              <input id="importConfigFile" type="file" accept=".json" style="display:none;">
+              <input id="importBundleFile" type="file" accept=".zip,application/zip" style="display:none;">
+            </div>
+          </div>
+
+          <div class="divider"></div>
+
+          <label>Template Library（縮圖卡片 / 搜尋 / 分類）</label>
+          <div class="libToolbar">
+            <input id="libSearch" placeholder="搜尋模板名稱..." />
+            <select id="libCategoryFilter"></select>
+            <button class="action" id="btnLibRefresh">刷新縮圖</button>
+          </div>
+
+          <div class="row3" style="margin-top:10px;">
+            <input id="libName" placeholder="模板名稱（例如 DHL EU）"/>
+            <input id="libCategory" placeholder="分類（例如 DHL / UPS / 自訂）"/>
+            <button class="action primary" id="btnLibSave">💾 存入模板庫（PDF+設定）</button>
+          </div>
+
+          <div class="libGrid" id="libGrid"></div>
+          <div class="status" id="libStatus" style="display:none;"></div>
+
+          <div class="divider"></div>
+          <label>範本縮圖（目前載入 PDF 第1頁）</label>
+          <canvas id="tplThumb"></canvas>
+        </div>
+
+        <!-- FONT -->
+        <div class="panelView" id="view_font" style="display:none;">
+          <div class="status">
+            <div>🈶</div>
+            <div>免上傳：放 <span class="mono">fonts/utk-font.ttf</span> 再按載入。</div>
+          </div>
+          <div class="btns">
+            <button class="action primary" id="btnLoadFontFromPath">從 fonts/utk-font.ttf 載入</button>
+            <button class="action" id="btnLoadFontCache">從快取載入</button>
+            <button class="action danger" id="btnClearFontCache">清除快取</button>
+          </div>
+          <label>（後備）上傳字型（ttf/otf）</label>
+          <input id="fontFile" type="file" accept=".ttf,.otf"/>
+          <div class="btns">
+            <button class="action" id="btnCacheFont">把目前字型存入快取</button>
+          </div>
+          <div class="status" id="fontStatus" style="display:none;"></div>
+        </div>
+
+        <!-- RA -->
+        <div class="panelView" id="view_ra" style="display:none;">
+          <div class="status">
+            <div>🏷️</div>
+            <div>貼上 RA list：只取 RA code + 英文公司名。</div>
+          </div>
+
+          <label>RA List（貼上）</label>
+          <textarea id="raImportText" placeholder="RA00993 Nippon Express (HK) Co. Ltd. 香港日通有限公司"></textarea>
+          <div class="btns">
+            <button class="action primary" id="btnImportRaText">匯入</button>
+            <button class="action danger" id="btnClearRaAll">清空</button>
+          </div>
+
+          <div class="divider"></div>
+
+          <div class="row2">
+            <div>
+              <label>Company（輸入即提示）</label>
+              <input id="raCompany" type="text" autocomplete="off"/>
+              <div id="raSuggest" style="display:none; border:1px solid var(--border); border-radius:12px; overflow:auto; max-height:240px; background:rgba(0,0,0,.25);"></div>
+            </div>
+            <div>
+              <label>RA Code</label>
+              <input id="raCodeInput" type="text" placeholder="RA00993"/>
+            </div>
+          </div>
+
+          <div class="btns">
+            <button class="action primary" id="btnSaveGroup">儲存</button>
+            <button class="action" id="btnUpdateGroup">更新</button>
+            <button class="action danger" id="btnDeleteGroup">刪除</button>
+            <button class="action" id="btnClearGroup">清空</button>
+          </div>
+
+          <label>已儲存 RA 組</label>
+          <select id="raGroupSelect"></select>
+          <div class="btns">
+            <button class="action" id="btnLoadGroup">載入到共用欄位</button>
+          </div>
+
+          <div class="status" id="raStatus" style="display:none;"></div>
+        </div>
+
+        <!-- FIELDS -->
+        <div class="panelView" id="view_fields" style="display:none;">
+          <div class="status">
+            <div>🧩</div>
+            <div>欄位支援：文字（excel/manual/var）、圖片（透明/底色/opacity）、多頁、分組（Header/Body/Footer）、拖放分組、跨頁拖曳。</div>
+          </div>
+
+          <div class="divider"></div>
+
+          <div class="row3">
+            <div>
+              <label>Preview 行距（twoLines 用）</label>
+              <input id="lineHeightPreview" type="number" step="0.05" min="0.8" max="3" value="1.20"/>
+            </div>
+            <div>
+              <label>PDF 行距（多行值）</label>
+              <input id="lineHeightPdf" type="number" step="0.05" min="0.8" max="3" value="1.20"/>
+            </div>
+            <div>
+              <label>Preview 顯示模式</label>
+              <select id="labelValueMode">
+                <option value="sameLine">同行：Label: Value</option>
+                <option value="twoLines">兩行：Label + Value</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="divider"></div>
+
+          <label>基礎欄位顯示（關閉會自動消失）</label>
+          <div class="row3">
+            <label><input type="checkbox" id="base_awb" checked> AWB</label>
+            <label><input type="checkbox" id="base_asn" checked> Company</label>
+            <label><input type="checkbox" id="base_ra" checked> RA</label>
+          </div>
+          <div class="row3">
+            <label><input type="checkbox" id="base_dt" checked> Date</label>
+            <div></div><div></div>
+          </div>
+
+          <div class="btns" style="margin-top:10px;">
+            <button class="action primary" id="btnConvertBaseToHeader">一鍵：基礎欄位 → Header（全頁共用）</button>
+            <button class="action danger" id="btnRestoreBaseFromHeader">還原：移除 Header 基礎欄位 + 開回基礎欄位</button>
+          </div>
+          <div class="tiny">
+            說明：會把 AWB/Company/RA/Date 轉成自訂欄位（var）並放入 Header（全頁）。
+            位置/字體沿用目前基礎座標（p_awb_x…）。轉換後會自動關閉 base 顯示避免重複。
+          </div>
+
+          <div class="divider"></div>
+
+          <div class="row3">
+            <input id="newFieldLabel" placeholder="顯示名稱（Invoice No）"/>
+            <input id="newFieldKey" placeholder="資料Key（invoiceNo）"/>
+            <select id="newFieldSource">
+              <option value="excel">來源：Excel/CSV欄位</option>
+              <option value="manual">來源：固定值</option>
+              <option value="var">來源：變數（{{awb}}/{{date}}/{{company}}/{{ra}}）</option>
+              <option value="image">來源：圖片（Image）</option>
+            </select>
+          </div>
+
+          <div class="row3">
+            <input id="newFieldDefault" placeholder="manual/var 使用；excel 可留空"/>
+            <select id="newFieldGroup">
+              <option value="header">Header（全頁）</option>
+              <option value="body" selected>Body（分頁）</option>
+              <option value="footer">Footer（全頁）</option>
+            </select>
+            <button class="action primary" id="btnAddField">➕ 新增欄位</button>
+          </div>
+
+          <div class="divider"></div>
+
+          <label>圖片欄位設定（source=image 時使用）</label>
+          <div class="row3">
+            <div>
+              <input id="imgUpload" type="file" accept="image/png,image/jpeg,image/jpg"/>
+              <div class="tiny">建議 PNG（可透明）；JPG 無透明。</div>
+            </div>
+            <div>
+              <label style="margin-top:0;">背景模式</label>
+              <select id="imgBgMode">
+                <option value="transparent">透明（保留 PNG Alpha）</option>
+                <option value="solid">實色底</option>
+              </select>
+            </div>
+            <div>
+              <label style="margin-top:0;">底色（bgColor）</label>
+              <input id="imgBgColor" type="color" value="#ffffff"/>
+            </div>
+          </div>
+
+          <div class="row3">
+            <div>
+              <label style="margin-top:0;">不透明度（opacity）</label>
+              <input id="imgOpacity" type="number" step="0.05" min="0" max="1" value="1.00"/>
+              <div class="tiny">浮水印：0.2～0.5</div>
+            </div>
+            <div>
+              <label style="margin-top:0;">預設寬度（pt）</label>
+              <input id="imgWidth" type="number" step="1" value="120"/>
+            </div>
+            <div>
+              <label style="margin-top:0;">預設高度（pt）</label>
+              <input id="imgHeight" type="number" step="1" value="120"/>
+            </div>
+          </div>
+
+          <div class="row3">
+            <div>
+              <label style="margin-top:0;">Body 新欄位預設頁（跟 Preview page）</label>
+              <select id="newFieldPage"><option value="1">第 1 頁</option></select>
+            </div>
+            <div></div><div></div>
+          </div>
+
+          <div class="btns">
+            <button class="action danger" id="btnClearFields">清空此模板欄位</button>
+          </div>
+
+          <div class="status" id="fieldStatus" style="display:none;"></div>
+
+          <label>欄位列表（Header/Body/Footer；拖放分組；Body 只顯示當前頁）</label>
+          <div id="fieldList" style="display:flex;flex-direction:column;gap:8px;"></div>
+        </div>
+
+        <!-- PREVIEW -->
+        <div class="panelView" id="view_preview" style="display:none;">
+          <div class="row3">
+            <div>
+              <label>Preview scale</label>
+              <input id="previewScale" type="number" value="1.5" step="0.1" min="0.5" max="3.0"/>
+            </div>
+            <div>
+              <label>預覽頁面</label>
+              <select id="previewPage"></select>
+            </div>
+            <div>
+              <label>點擊要設定的欄位</label>
+              <select id="activeField"></select>
+            </div>
+          </div>
+
+          <div id="pageTabs"></div>
+
+          <div class="btns">
+            <button class="action primary" id="btnRenderPreview">渲染預覽</button>
+            <button class="action" id="btnToggleOverlay">疊字：開/關</button>
+            <button class="action" id="btnSavePos">保存座標</button>
+            <button class="action danger" id="btnResetPos">重置座標</button>
+          </div>
+
+          <div id="canvasWrap" style="position:relative;">
+            <canvas id="pdfCanvas"></canvas>
+
+            <!-- Edge hints -->
+            <div id="pageEdgeTop"
+                 style="position:absolute; left:10px; right:10px; top:10px; height:56px; border-radius:14px;
+                        background:rgba(59,130,246,.18); border:1px solid rgba(59,130,246,.35);
+                        display:none; align-items:center; justify-content:center;
+                        backdrop-filter: blur(6px); cursor:pointer; user-select:none;">
+              <div style="font-weight:900;">⬆ 拖到這裡切到上一頁</div>
+            </div>
+
+            <div id="pageEdgeBottom"
+                 style="position:absolute; left:10px; right:10px; bottom:10px; height:56px; border-radius:14px;
+                        background:rgba(59,130,246,.18); border:1px solid rgba(59,130,246,.35);
+                        display:none; align-items:center; justify-content:center;
+                        backdrop-filter: blur(6px); cursor:pointer; user-select:none;">
+              <div style="font-weight:900;">⬇ 拖到這裡切到下一頁</div>
+            </div>
+          </div>
+
+          <div class="tiny mono" id="mouseInfo">提示：可拖拉文字/圖片；圖片右下角可縮放；拖到上下邊緣可跨頁搬欄位。</div>
+
+          <div class="divider"></div>
+
+          <label>基礎欄位座標/字體（PDF pt）</label>
+
+          <div class="row2">
+            <div>
+              <label>AWB (x,y,size)</label>
+              <div class="row3">
+                <input id="p_awb_x" type="number" step="1"/>
+                <input id="p_awb_y" type="number" step="1"/>
+                <input id="p_awb_s" type="number" step="1"/>
+              </div>
+            </div>
+            <div>
+              <label>Company (x,y,size)</label>
+              <div class="row3">
+                <input id="p_asn_x" type="number" step="1"/>
+                <input id="p_asn_y" type="number" step="1"/>
+                <input id="p_asn_s" type="number" step="1"/>
+              </div>
+            </div>
+          </div>
+
+          <div class="row2">
+            <div>
+              <label>RA (x,y,size)</label>
+              <div class="row3">
+                <input id="p_ra_x" type="number" step="1"/>
+                <input id="p_ra_y" type="number" step="1"/>
+                <input id="p_ra_s" type="number" step="1"/>
+              </div>
+            </div>
+            <div>
+              <label>Date (x,y,size)</label>
+              <div class="row3">
+                <input id="p_dt_x" type="number" step="1"/>
+                <input id="p_dt_y" type="number" step="1"/>
+                <input id="p_dt_s" type="number" step="1"/>
+              </div>
+            </div>
+          </div>
+
+          <div class="status" id="previewStatus" style="display:none;"></div>
+        </div>
+
+        <!-- EXPORT -->
+        <div class="panelView" id="view_export" style="display:none;">
+          <div class="status">
+            <div>📦</div>
+            <div>批量輸出 ZIP：每個 AWB 一份 PDF。</div>
+          </div>
+          <div class="btns">
+            <button class="action primary" id="btnGenerateZip">生成 ZIP</button>
+            <button class="action" id="btnSampleOne">下載樣本</button>
+            <button class="action danger" id="btnCancel" disabled>取消</button>
+          </div>
+          <div class="status" id="exportStatus" style="display:none;"></div>
+          <div style="margin-top:10px;border:1px solid var(--border);border-radius:12px;overflow:hidden;background:rgba(255,255,255,.03)">
+            <div id="progressBar" style="height:10px;width:0%;background:linear-gradient(90deg,var(--brand),#a78bfa)"></div>
+            <div style="padding:10px 12px;font-size:12px;color:var(--muted);display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap">
+              <span id="progressText">尚未開始</span>
+              <span id="progressNum" class="mono">0/0</span>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </section>
+  </main>
+</div>
+
+<script>
+/* =========================
+   Global
+========================= */
+const { PDFDocument, rgb, StandardFonts } = PDFLib;
+const $ = (id)=>document.getElementById(id);
+
+const KEY_THEME="utk_theme_v1";
+const KEY_RA_GROUPS="utk_ra_groups_fullpromax_merged";
+const KEY_POS_BASE="utk_pos_base_fullpromax_merged";
+const KEY_AWB_MAP="utk_awb_ra_map_fullpromax_merged";
+const KEY_TEMPLATE_PROFILES="utk_template_profiles_fullpromax_merged";
+const KEY_LIBRARY_META="utk_template_library_meta_fullpromax_merged";
+
+const DB_NAME="UTK_FULLPRO_DB_MERGED", DB_VER=1, STORE="kv";
+const CACHE_TPL_BYTES="cache_template_bytes";
+const CACHE_TPL_NAME="cache_template_name";
+const CACHE_FONT_BYTES="cache_font_bytes";
+const LIB_PDF_PREFIX="libpdf::";
+
+let templateBytes=null, templateName="";
+let customFontBytes=null;
+let activeTemplateId=null;
+
+let currentRows=[];
+let overlayEnabled=true;
+let previewPdf=null;
+let previewViewport=null;
+let lastRenderedImageData=null;
+let previewNumPages=1;
+
+// drag state (move/resize, text/image)
+let overlayItems=[];
+let dragState={active:false,item:null,mode:"move",lastX:0,lastY:0,moved:false};
+
+// image upload temp
+let tmpImageDataUrl=null;
+
+// thumbnail cache
+const thumbCache = new Map();
+
+// image cache
+const _imgCache = new Map();
+
+/* =========================
+  Utils
+========================= */
+function showStatus(elId, type, msg){
+  const el=$(elId);
+  if(!el) return;
+  el.style.display="flex";
+  el.className="status " + (type==="ok"?"ok":type==="bad"?"bad":"");
+  el.innerHTML = `<div>${type==="ok"?"✅":type==="bad"?"❌":"ℹ️"}</div><div>${msg}</div>`;
+}
+function escapeHtml(s){ return String(s).replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m])); }
+function sanitizeFilename(name){ return (name||"").replace(/[\\\/:\*\?"<>\|\u0000-\u001F]+/g,"").replace(/\s+/g,"").trim(); }
+function normalizeAwb(s){ return String(s||"").trim().replace(/\s+/g,"").replace(/[–—]/g,"-"); }
+function normalizeRa(s){ return String(s||"").trim().toUpperCase(); }
+function downloadBlob(blob, filename){
+  const a=document.createElement("a");
+  a.href=URL.createObjectURL(blob);
+  a.download=filename;
+  document.body.appendChild(a);
+  a.click(); a.remove();
+  URL.revokeObjectURL(a.href);
+}
+function formatDate(input){
+  if(!input) return "";
+  const f=$("dateFormat")?.value||"DD/MM/YYYY";
+  const d=new Date(input);
+  if(isNaN(d)) return String(input);
+  const day=String(d.getDate()).padStart(2,"0");
+  const mon=String(d.getMonth()+1).padStart(2,"0");
+  const yr=d.getFullYear();
+  if(f==="DD/MM/YYYY") return `${day}/${mon}/${yr}`;
+  if(f==="YYYY-MM-DD") return `${yr}-${mon}-${day}`;
+  if(f==="MM/DD/YYYY") return `${mon}/${day}/${yr}`;
+  return String(input);
+}
+
+/* =========================
+  Theme
+========================= */
+function applyTheme(theme){ document.body.classList.toggle("light", theme==="light"); }
+$("btnTheme").addEventListener("click", ()=>{
+  const cur=localStorage.getItem(KEY_THEME)||"dark";
+  const next=cur==="dark"?"light":"dark";
+  localStorage.setItem(KEY_THEME,next);
+  applyTheme(next);
+});
+applyTheme(localStorage.getItem(KEY_THEME)||"dark");
+
+/* =========================
+  IndexedDB
+========================= */
+function openDB(){
+  return new Promise((resolve,reject)=>{
+    const req=indexedDB.open(DB_NAME, DB_VER);
+    req.onupgradeneeded=()=>{
+      const db=req.result;
+      if(!db.objectStoreNames.contains(STORE)) db.createObjectStore(STORE);
+    };
+    req.onsuccess=()=>resolve(req.result);
+    req.onerror=()=>reject(req.error);
+  });
+}
+async function idbSet(key, value){
+  const db=await openDB();
+  return new Promise((resolve,reject)=>{
+    const tx=db.transaction(STORE,"readwrite");
+    tx.objectStore(STORE).put(value,key);
+    tx.oncomplete=()=>resolve();
+    tx.onerror=()=>reject(tx.error);
+  });
+}
+async function idbGet(key){
+  const db=await openDB();
+  return new Promise((resolve,reject)=>{
+    const tx=db.transaction(STORE,"readonly");
+    const req=tx.objectStore(STORE).get(key);
+    req.onsuccess=()=>resolve(req.result);
+    req.onerror=()=>reject(req.error);
+  });
+}
+async function idbDel(key){
+  const db=await openDB();
+  return new Promise((resolve,reject)=>{
+    const tx=db.transaction(STORE,"readwrite");
+    tx.objectStore(STORE).delete(key);
+    tx.oncomplete=()=>resolve();
+    tx.onerror=()=>reject(tx.error);
+  });
+}
+
+/* =========================
+  Panel Switch
+========================= */
+const panelMeta={
+  import:["📥 匯入","Import"],
+  template:["📄 範本 / 模板庫","Template"],
+  font:["🈶 字型","Font"],
+  ra:["🏷️ RA","RA"],
+  fields:["🧩 欄位","Fields"],
+  preview:["🖱️ 預覽","Preview"],
+  export:["📦 匯出","Export"],
+};
+function showTab(name){
+  document.querySelectorAll(".panelView").forEach(v=>v.style.display="none");
+  $("view_"+name).style.display="";
+  document.querySelectorAll(".tab").forEach(b=>b.classList.remove("active"));
+  document.querySelector(`.tab[data-tab="${name}"]`).classList.add("active");
+  $("panelTitle").textContent = panelMeta[name][0];
+  $("panelBadge").textContent = panelMeta[name][1];
+  localStorage.setItem("utk_last_tab", name);
+  if(name==="template") renderLibrary();
+  if(name==="fields") renderFieldList();
+}
+document.querySelectorAll(".tab").forEach(btn=>{
+  btn.addEventListener("click", ()=> showTab(btn.dataset.tab));
+});
+
+/* =========================
+  Template Profiles
+========================= */
+function getProfiles(){ try{return JSON.parse(localStorage.getItem(KEY_TEMPLATE_PROFILES)||"{}")}catch{return {}} }
+function setProfiles(obj){ localStorage.setItem(KEY_TEMPLATE_PROFILES, JSON.stringify(obj)); }
+function ensureTemplateProfile(templateId){
+  const profiles=getProfiles();
+  if(!profiles[templateId]){
+    profiles[templateId]={
+      tag:"UTK",
+      fields:[],
+      lineHeightPreview:1.2,
+      lineHeightPdf:1.2,
+      labelValueMode:"sameLine",
+      baseEnabled:{awb:true,asn:true,ra:true,dt:true},
+    };
+  }else{
+    profiles[templateId].lineHeightPreview ??= 1.2;
+    profiles[templateId].lineHeightPdf ??= 1.2;
+    profiles[templateId].labelValueMode ??= "sameLine";
+    profiles[templateId].baseEnabled ??= {awb:true,asn:true,ra:true,dt:true};
+    (profiles[templateId].fields||[]).forEach(f=>{
+      if(f.enabled===undefined) f.enabled=true;
+      f.group ||= "body";
+      f.allPages ??= (f.group==="header"||f.group==="footer");
+    });
+  }
+  setProfiles(profiles);
+  return profiles[templateId];
+}
+function saveTemplateProfile(templateId, patch){
+  const profiles=getProfiles();
+  profiles[templateId]={...(profiles[templateId]||{}), ...patch};
+  setProfiles(profiles);
+  return profiles[templateId];
+}
+function getActiveProfile(){ if(!activeTemplateId) return null; return ensureTemplateProfile(activeTemplateId); }
+
+async function computeTemplateId(bytes, name){
+  try{
+    const buf=await crypto.subtle.digest("SHA-256", bytes.buffer);
+    const hex=Array.from(new Uint8Array(buf)).map(b=>b.toString(16).padStart(2,"0")).join("");
+    return `${(name||"template").toLowerCase()}::${hex.slice(0,16)}`;
+  }catch{
+    return `${(name||"template").toLowerCase()}::fallback`;
+  }
+}
+
+/* =========================
+  Base positions
+========================= */
+const defaultPos={ awb:{x:180,y:520,s:11}, asn:{x:40,y:625,s:10}, ra:{x:40,y:590,s:11}, dt:{x:430,y:160,s:11} };
+function applyBasePos(pos){
+  $("p_awb_x").value=pos.awb.x; $("p_awb_y").value=pos.awb.y; $("p_awb_s").value=pos.awb.s;
+  $("p_asn_x").value=pos.asn.x; $("p_asn_y").value=pos.asn.y; $("p_asn_s").value=pos.asn.s;
+  $("p_ra_x").value=pos.ra.x; $("p_ra_y").value=pos.ra.y; $("p_ra_s").value=pos.ra.s;
+  $("p_dt_x").value=pos.dt.x; $("p_dt_y").value=pos.dt.y; $("p_dt_s").value=pos.dt.s;
+}
+function readBasePos(){
+  const num=(id,f)=>{ const v=parseFloat($(id).value); return Number.isFinite(v)?v:f; };
+  return {
+    awb:{x:num("p_awb_x",defaultPos.awb.x),y:num("p_awb_y",defaultPos.awb.y),s:num("p_awb_s",defaultPos.awb.s)},
+    asn:{x:num("p_asn_x",defaultPos.asn.x),y:num("p_asn_y",defaultPos.asn.y),s:num("p_asn_s",defaultPos.asn.s)},
+    ra:{x:num("p_ra_x",defaultPos.ra.x),y:num("p_ra_y",defaultPos.ra.y),s:num("p_ra_s",defaultPos.ra.s)},
+    dt:{x:num("p_dt_x",defaultPos.dt.x),y:num("p_dt_y",defaultPos.dt.y),s:num("p_dt_s",defaultPos.dt.s)},
+  };
+}
+function loadBasePos(){
+  if(!activeTemplateId){ applyBasePos(defaultPos); return false; }
+  let all={}; try{ all=JSON.parse(localStorage.getItem(KEY_POS_BASE)||"{}"); }catch{}
+  if(all[activeTemplateId]){ applyBasePos(all[activeTemplateId]); return true; }
+  applyBasePos(defaultPos); return false;
+}
+function saveBasePos(){
+  if(!activeTemplateId) return;
+  let all={}; try{ all=JSON.parse(localStorage.getItem(KEY_POS_BASE)||"{}"); }catch{}
+  all[activeTemplateId]=readBasePos();
+  localStorage.setItem(KEY_POS_BASE, JSON.stringify(all));
+}
+let baseSaveTimer=null;
+function scheduleSaveBasePos(){
+  clearTimeout(baseSaveTimer);
+  baseSaveTimer=setTimeout(()=>saveBasePos(), 250);
+}
+
+/* =========================
+  Data mode switch
+========================= */
+$("dataMode").addEventListener("change", ()=>{
+  const v=$("dataMode").value;
+  $("mode_awb").style.display = v==="awb" ? "" : "none";
+  $("mode_csv").style.display = v==="csv" ? "" : "none";
+  $("mode_xlsx").style.display = v==="xlsx" ? "" : "none";
+});
+
+/* =========================
+  CSV/Excel template download
+========================= */
+function buildTemplateHeaders(){
+  const base = ["awbNo","assignorName","raCode","docDate"];
+  const prof = getActiveProfile?.();
+  const keys = (prof?.fields||[])
+    .filter(f => f.source === "excel")
+    .map(f => String(f.key||"").trim())
+    .filter(Boolean);
+  const seen = new Set();
+  const custom = keys.filter(k=>{
+    const kk=k.toLowerCase();
+    if(seen.has(kk)) return false;
+    seen.add(kk);
+    return true;
+  });
+  return [...base, ...custom];
+}
+function downloadCsvTemplate(){
+  const headers = buildTemplateHeaders();
+  const content = headers.join(",") + "\n";
+  downloadBlob(new Blob([content], {type:"text/csv;charset=utf-8"}), "UTK_template.csv");
+}
+function downloadExcelTemplate(){
+  const headers = buildTemplateHeaders();
+  const ws = XLSX.utils.aoa_to_sheet([headers]);
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, "Template");
+  XLSX.writeFile(wb, "UTK_template.xlsx");
+}
+$("btnDownloadCsvTemplate")?.addEventListener("click", downloadCsvTemplate);
+$("btnDownloadExcelTemplate")?.addEventListener("click", downloadExcelTemplate);
+
+/* =========================
+  Import parse
+========================= */
+function parseAwbList(text, max=1000){
+  const tokens=(text||"").split(/[\n\r,; \t]+/g).map(s=>s.trim()).filter(Boolean);
+  const seen=new Set(); const unique=[];
+  let removed=0;
+  for(const t of tokens){
+    const x=normalizeAwb(t);
+    if(seen.has(x)){removed++;continue;}
+    seen.add(x); unique.push(x);
+    if(unique.length>=max) break;
+  }
+  return {unique, removed};
+}
+async function getRowsFromCSV(){
+  const file=$("csvFile").files?.[0];
+  const text=$("csvText").value.trim();
+  if(!file && !text) return [];
+  return await new Promise(resolve=>{
+    Papa.parse(file||text,{header:true,skipEmptyLines:true,complete:(res)=>resolve(res.data||[])});
+  });
+}
+async function getRowsFromXLSX(){
+  const f=$("xlsxFile").files?.[0];
+  if(!f) return [];
+  const buf=await f.arrayBuffer();
+  const wb=XLSX.read(buf,{type:"array"});
+  const ws=wb.Sheets[wb.SheetNames[0]];
+  return XLSX.utils.sheet_to_json(ws,{defval:""}) || [];
+}
+function normalizeRow(r){
+  const pick=(...keys)=>{
+    for(const k of keys){
+      if(r && r[k]!==undefined && r[k]!==null && String(r[k]).trim()!=="") return String(r[k]).trim();
+    }
+    return "";
+  };
+  const base={
+    awbNo: pick("awbNo","awb","AWB","MAWB","mawb"),
+    assignorName: pick("assignorName","company","Company","UTK PARTY","ISSUING AGENT"),
+    raCode: pick("raCode","RA","RACODE","UTK RA#","UTK RACODE","RA#"),
+    docDate: pick("docDate","date","Date"),
+  };
+  base.awbNo=normalizeAwb(base.awbNo);
+  base.raCode=normalizeRa(base.raCode);
+  base._src=r||{};
+  return base;
+}
+function renderPreviewTable(rows){
+  const tbody=$("previewTbody");
+  tbody.innerHTML="";
+  rows.slice(0,10).forEach((r,i)=>{
+    const tr=document.createElement("tr");
+    tr.innerHTML = `
+      <td style="padding:10px;border-bottom:1px solid var(--border);">${i+1}</td>
+      <td style="padding:10px;border-bottom:1px solid var(--border);">${escapeHtml(r.awbNo||"")}</td>
+      <td style="padding:10px;border-bottom:1px solid var(--border);">${escapeHtml(r.assignorName||"")}</td>
+      <td style="padding:10px;border-bottom:1px solid var(--border);">${escapeHtml(r.raCode||"")}</td>
+      <td style="padding:10px;border-bottom:1px solid var(--border);">${escapeHtml(r.docDate||"")}</td>`;
+    tbody.appendChild(tr);
+  });
+}
+
+/* =========================
+  AWB→RA map (flight summary)
+========================= */
+function saveAwbMap(map){ localStorage.setItem(KEY_AWB_MAP, JSON.stringify(map)); }
+function loadAwbMap(){ try{return JSON.parse(localStorage.getItem(KEY_AWB_MAP)||"{}")}catch{return {}} }
+function looksLikeFlightSummary(headers){
+  const h=headers.map(x=>String(x||"").trim().toUpperCase());
+  const hasMAWB=h.includes("MAWB")||h.includes("AWB");
+  const hasRA=h.includes("RACODE")||h.includes("UTK RA#")||h.includes("UTK RACODE")||h.includes("RA#");
+  return hasMAWB && hasRA;
+}
+function extractFromFlightRow(row){
+  const pick=(...keys)=>{ for(const k of keys){ if(row[k]!=null && String(row[k]).trim()!=="") return String(row[k]).trim(); } return ""; };
+  let awb=pick("MAWB","AWB","mawb","awb","MAWBNo","AWBNo");
+  let ra=pick("RACODE","UTK RA#","UTK RACODE","RA#","raCode");
+  let company=pick("UTK PARTY","ISSUING AGENT","CONSIGNEE");
+  const blob=Object.keys(row).map(k=>String(row[k]??"")).join(" | ");
+  if(!awb){ const m=blob.match(/\b\d{3}-\d{6,}\b/); if(m) awb=m[0]; }
+  if(!ra){ const m=blob.match(/\bRA\d{3,6}\b/i); if(m) ra=m[0]; }
+  if(!company){ const m=blob.match(/([A-Za-z0-9&(),.'\-\s]{4,}?)\s+RA\d{3,6}\b/i); if(m) company=m[1].trim(); }
+  awb=normalizeAwb(awb); ra=normalizeRa(ra);
+  if(!awb || !/^\d{3}-/.test(awb)) return null;
+  if(!ra || !/^RA\d+$/i.test(ra)) return null;
+  return {awb, raCode:ra, assignorName:String(company||"").trim()};
+}
+function buildMapFromFlightRows(rows){
+  const map={}; let ok=0,bad=0;
+  for(const r of rows){
+    const ex=extractFromFlightRow(r);
+    if(!ex){bad++;continue;}
+    map[ex.awb]={raCode:ex.raCode, assignorName:ex.assignorName};
+    ok++;
+  }
+  return {map,ok,bad,total:rows.length};
+}
+function fillAwbListFromMap(map, limit=1000){
+  $("awbList").value = Object.keys(map).slice(0,limit).join("\n");
+  $("dataMode").value="awb";
+  $("dataMode").dispatchEvent(new Event("change"));
+}
+function applyAwbMapToRows(rows){
+  const map=loadAwbMap();
+  if(!Object.keys(map).length) return rows;
+  return rows.map(r=>{
+    const hit=map[normalizeAwb(r.awbNo||"")];
+    if(hit){
+      if(!r.raCode) r.raCode=hit.raCode;
+      if(!r.assignorName) r.assignorName=hit.assignorName;
+    }
+    return r;
+  });
+}
+function autoFillCommonRaIfPossible(rows){
+  const uniq=new Set(rows.map(r=>normalizeRa(r.raCode||"")).filter(Boolean));
+  if(uniq.size!==1) return false;
+  const ra=[...uniq][0];
+  const company=rows.find(r=>r.raCode && r.assignorName)?.assignorName || "";
+  if(ra && company){ $("raCode").value=ra; $("assignorName").value=company; return true; }
+  return false;
+}
+$("xlsxFile").addEventListener("change", async ()=>{
+  const f=$("xlsxFile").files?.[0];
+  if(!f) return;
+  const buf=await f.arrayBuffer();
+  const wb=XLSX.read(buf,{type:"array"});
+  const ws=wb.Sheets[wb.SheetNames[0]];
+  const aoa=XLSX.utils.sheet_to_json(ws,{header:1,defval:""});
+  const headers=aoa[0]||[];
+  if(looksLikeFlightSummary(headers)){
+    const rows=XLSX.utils.sheet_to_json(ws,{defval:""})||[];
+    const {map,ok,bad,total}=buildMapFromFlightRows(rows);
+    const old=loadAwbMap();
+    saveAwbMap({...old,...map});
+    fillAwbListFromMap(map);
+    showStatus("awbMapStatus","ok",`已建立 AWB→RA：${ok}/${total}（略過 ${bad}）`);
+  }else{
+    $("awbMapStatus").style.display="none";
+  }
+});
+
+/* =========================
+  Auto-create fields from import
+========================= */
+function uid(){ return "f_"+Math.random().toString(16).slice(2)+Date.now().toString(16); }
+function autoCreateFieldsFromData(rows){
+  if(!activeTemplateId || !rows?.length) return;
+  const prof = getActiveProfile?.();
+  if(!prof) return;
+  const exists = new Set((prof.fields||[]).map(f => String(f.key||"").toLowerCase()));
+  const sample = rows[0]._src || {};
+  Object.keys(sample).forEach(k=>{
+    const key = String(k||"").trim();
+    if(!key) return;
+    if(["awbNo","assignorName","raCode","docDate"].includes(key)) return;
+    if(exists.has(key.toLowerCase())) return;
+    prof.fields.push({
+      id: uid(),
+      label: key,
+      key: key,
+      source: "excel",
+      defaultValue: "",
+      page: Number(document.getElementById("previewPage")?.value || 1) || 1,
+      x: 0, y: 0, size: 10,
+      enabled: true,
+      group: "body",
+      allPages: false
+    });
+    exists.add(key.toLowerCase());
+  });
+  saveTemplateProfile(activeTemplateId,{fields: prof.fields});
+  renderFieldList?.();
+}
+
+/* =========================
+  Analyze
+========================= */
+async function analyzeData(){
+  const mode=$("dataMode").value;
+  let rows=[], skipped=0;
+
+  if(mode==="awb"){
+    const {unique, removed}=parseAwbList($("awbList").value, 1000);
+    rows=unique.map(awbNo=>({awbNo,assignorName:"",raCode:"",docDate:"",_src:null}));
+    skipped=removed;
+  }else if(mode==="csv"){
+    const raw=await getRowsFromCSV();
+    rows=raw.map(normalizeRow).filter(r=>r.awbNo);
+    skipped=Math.max(0, raw.length-rows.length);
+  }else{
+    const raw=await getRowsFromXLSX();
+    rows=raw.map(normalizeRow).filter(r=>r.awbNo);
+    skipped=Math.max(0, raw.length-rows.length);
+  }
+
+  const seen=new Set();
+  rows=rows.filter(r=>{ if(seen.has(r.awbNo)) return false; seen.add(r.awbNo); return true; }).slice(0,1000);
+
+  rows=applyAwbMapToRows(rows);
+  currentRows=rows;
+  renderPreviewTable(rows);
+  autoFillCommonRaIfPossible(rows);
+
+  showStatus("runStatus","ok",`分析完成：${rows.length} 筆（略過 ${skipped}）`);
+
+  autoCreateFieldsFromData(rows);
+
+  return rows;
+}
+$("btnAnalyze").addEventListener("click", analyzeData);
+
+$("btnApplyAwbMap").addEventListener("click", ()=>{
+  if(!currentRows.length) return showStatus("runStatus","bad","請先分析資料");
+  currentRows = applyAwbMapToRows(currentRows);
+  renderPreviewTable(currentRows);
+  autoFillCommonRaIfPossible(currentRows);
+  showStatus("runStatus","ok","已套用 AWB→RA");
+});
+
+/* =========================
+  refreshActiveFieldOptions (base enabled hide)
+========================= */
+function refreshActiveFieldOptions(){
+  const sel = document.getElementById("activeField");
+  if(!sel) return;
+  const prof = getActiveProfile?.();
+  const baseEnabled = prof?.baseEnabled || {awb:true,asn:true,ra:true,dt:true};
+  const cur = sel.value;
+  sel.innerHTML = "";
+  const add = (v,t)=>{
+    const opt = document.createElement("option");
+    opt.value=v; opt.textContent=t;
+    sel.appendChild(opt);
+  };
+  if(baseEnabled.awb) add("awb","AWB");
+  if(baseEnabled.asn) add("asn","Company");
+  if(baseEnabled.ra)  add("ra","RA");
+  if(baseEnabled.dt)  add("dt","Date");
+  (prof?.fields||[]).forEach(f=>{
+    const opt = document.createElement("option");
+    opt.value = "custom::"+f.id;
+    opt.textContent = `[自訂] ${f.label}`;
+    sel.appendChild(opt);
+  });
+  if([...sel.options].some(o=>o.value===cur)) sel.value = cur;
+}
+
+/* =========================
+  Fields: vars + image
+========================= */
+function applyVars(str,row,common){
+  const s=String(str||"");
+  return s
+    .replace(/{{awb}}/gi, row.awbNo||"")
+    .replace(/{{company}}/gi, row.assignorName||common.assignorName||"")
+    .replace(/{{ra}}/gi, row.raCode||common.raCode||"")
+    .replace(/{{date}}/gi, formatDate(common.docDate||row.docDate||""));
+}
+function resolveFieldValue(field,row,common){
+  if(field.source==="excel"){
+    const src=row._src||{};
+    const want=String(field.key||"").trim();
+    if(!want) return "";
+    if(src[want]!=null && String(src[want]).trim()!=="") return String(src[want]).trim();
+    const hk=Object.keys(src).find(k=>k.toLowerCase()===want.toLowerCase());
+    if(hk && String(src[hk]).trim()!=="") return String(src[hk]).trim();
+    return field.defaultValue||"";
+  }
+  if(field.source==="manual") return field.defaultValue||"";
+  if(field.source==="var") return applyVars(field.defaultValue||"", row, common);
+  return "";
+}
+function hexToRgb01(hex){
+  const h=String(hex||"#ffffff").replace("#","");
+  const r=parseInt(h.slice(0,2),16)/255;
+  const g=parseInt(h.slice(2,4),16)/255;
+  const b=parseInt(h.slice(4,6),16)/255;
+  return {r,g,b};
+}
+function dataUrlToUint8Array(dataUrl){
+  const parts=String(dataUrl||"").split(",");
+  const meta=parts[0]||"";
+  const b64=parts[1]||"";
+  const bin=atob(b64);
+  const bytes=new Uint8Array(bin.length);
+  for(let i=0;i<bin.length;i++) bytes[i]=bin.charCodeAt(i);
+  return {bytes, meta};
+}
+function drawChecker(ctx, x, y, w, h, size=10){
+  for(let yy=0; yy<h; yy+=size){
+    for(let xx=0; xx<w; xx+=size){
+      ctx.fillStyle = ((xx/size + yy/size) % 2 === 0) ? "rgba(255,255,255,.35)" : "rgba(0,0,0,.12)";
+      ctx.fillRect(x+xx, y+yy, size, size);
+    }
+  }
+}
+function getCachedImage(dataUrl){
+  if(!dataUrl) return null;
+  if(_imgCache.has(dataUrl)) return _imgCache.get(dataUrl);
+  const img = new Image();
+  const rec = {img, loaded:false};
+  _imgCache.set(dataUrl, rec);
+  img.onload = ()=>{ rec.loaded=true; redrawOverlay(); };
+  img.src = dataUrl;
+  return rec;
+}
+$("imgUpload")?.addEventListener("change",(e)=>{
+  const f=e.target.files?.[0];
+  if(!f){ tmpImageDataUrl=null; return; }
+  const reader=new FileReader();
+  reader.onload=()=>{ tmpImageDataUrl=reader.result; showStatus("fieldStatus","ok","已載入圖片，可新增 image 欄位"); };
+  reader.readAsDataURL(f);
+});
+
+/* =========================
+  Field Panel sync by page
+========================= */
+function refreshNewFieldPageOptions(){
+  const sel=$("newFieldPage");
+  if(!sel) return;
+  sel.innerHTML="";
+  const n=previewNumPages || 1;
+  for(let i=1;i<=n;i++){
+    const opt=document.createElement("option");
+    opt.value=String(i);
+    opt.textContent=`第 ${i} 頁`;
+    sel.appendChild(opt);
+  }
+  const cur=Number($("previewPage")?.value || 1);
+  sel.value=String(Math.min(cur,n));
+}
+
+/* =========================
+  Group UI + Field list rendering
+========================= */
+function splitFieldsByGroup(fields, currentPage){
+  const g={header:[], body:[], footer:[]};
+  fields.forEach((f,idx)=>{
+    const group=f.group||"body";
+    if(group==="body"){
+      if(Number(f.page||1)!==currentPage) return;
+      g.body.push({f,idx});
+    }else if(group==="header"){
+      g.header.push({f,idx});
+    }else if(group==="footer"){
+      g.footer.push({f,idx});
+    }else{
+      g.body.push({f,idx});
+    }
+  });
+  return g;
+}
+function fieldRowHtml(f,idx){
+  const isGlobal = f.allPages || f.group==="header" || f.group==="footer";
+  const scope = isGlobal ? "✅ 全頁" : `頁 ${Number(f.page||1)}`;
+  const extra = (f.source==="image")
+    ? `<span class="badge">${Math.round(f.width||0)}×${Math.round(f.height||0)}pt</span>`
+    : `<span class="badge">${Math.round(f.size||10)}pt</span>`;
+  return `
+  <div class="dragRow" draggable="true" data-field-id="${escapeHtml(f.id)}" data-index="${idx}">
+    <div style="display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap;align-items:center;">
+      <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center;">
+        <span class="badge">↕</span>
+        <b>${escapeHtml(f.label||"(no label)")}</b>
+        <span class="badge">${escapeHtml(f.group||"body")}</span>
+        <span class="badge">${escapeHtml(f.source||"")}</span>
+        <span class="badge mono">${escapeHtml(f.key||"")}</span>
+        ${extra}
+        <span class="badge">${scope}</span>
+        <label style="display:flex;align-items:center;gap:6px;font-size:12px;color:var(--muted);">
+          <input type="checkbox" data-act="toggle" ${f.enabled!==false?"checked":""}> 顯示
+        </label>
+      </div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;">
+        <button class="action" data-act="locate">定位</button>
+        <button class="action danger" data-act="del">刪除</button>
+      </div>
+    </div>
+
+    <div style="margin-top:8px;display:grid;grid-template-columns:repeat(4,1fr);gap:8px;">
+      <input type="number" step="1" placeholder="x" value="${f.x ?? ""}" data-k="x">
+      <input type="number" step="1" placeholder="y" value="${f.y ?? ""}" data-k="y">
+      <input type="number" step="1" placeholder="${f.source==='image'?'width':'size'}" value="${f.source==='image'?(f.width??''):(f.size??'')}" data-k="${f.source==='image'?'width':'size'}">
+      <input type="number" step="1" placeholder="${f.source==='image'?'height':'page'}" value="${f.source==='image'?(f.height??''):(f.page??1)}" data-k="${f.source==='image'?'height':'page'}">
+    </div>
+
+    <div style="margin-top:8px;${(f.source==='excel'||f.source==='manual'||f.source==='var')?'':'display:none;'}">
+      <input type="text" placeholder="defaultValue / var 模板" value="${escapeHtml(f.defaultValue||"")}" data-k="defaultValue">
+    </div>
+  </div>`;
+}
+function groupZoneHtml(key,title,list){
+  const items = list.length ? list.map(({f,idx})=>fieldRowHtml(f,idx)).join("") : `<div class="tiny">（此區暫無欄位）</div>`;
+  return `
+    <div class="groupZone" data-group="${key}">
+      <div class="groupZoneTitle">${title}</div>
+      ${items}
+    </div>`;
+}
+function attachRowDragHandlers(){
+  document.querySelectorAll(".dragRow[draggable='true']").forEach(row=>{
+    row.addEventListener("dragstart",(e)=>{
+      e.dataTransfer.setData("text/plain", row.dataset.fieldId);
+      row.classList.add("dragging");
+    });
+    row.addEventListener("dragend",()=>row.classList.remove("dragging"));
+  });
+}
+function applyFieldGroup(fieldId, group){
+  const prof=getActiveProfile();
+  const idx=(prof.fields||[]).findIndex(f=>f.id===fieldId);
+  if(idx<0) return;
+  const curPage = Number($("previewPage")?.value || 1);
+  const f = prof.fields[idx];
+  f.group = group;
+  if(group==="header" || group==="footer"){
+    f.allPages = true;
+    f.page = 1; // anchor
+  }else{
+    f.allPages = false;
+    f.page = curPage;
+  }
+  saveTemplateProfile(activeTemplateId,{fields:prof.fields});
+  renderFieldList();
+  redrawOverlay();
+  renderPageTabs();
+}
+function attachGroupDropHandlers(){
+  const zones=document.querySelectorAll(".groupZone");
+  zones.forEach(zone=>{
+    zone.addEventListener("dragenter",(e)=>{ e.preventDefault(); zone.classList.add("drop-hover"); });
+    zone.addEventListener("dragleave",(e)=>{ const to=e.relatedTarget; if(to && zone.contains(to)) return; zone.classList.remove("drop-hover"); });
+    zone.addEventListener("dragover",(e)=>e.preventDefault());
+    zone.addEventListener("drop",(e)=>{
+      e.preventDefault();
+      zone.classList.remove("drop-hover");
+      zone.classList.add("drop-flash");
+      setTimeout(()=>zone.classList.remove("drop-flash"), 180);
+      const id=e.dataTransfer.getData("text/plain");
+      const group=zone.dataset.group;
+      applyFieldGroup(id, group);
+    });
+  });
+  attachRowDragHandlers();
+}
+function renderFieldList(){
+  const wrap=$("fieldList");
+  wrap.innerHTML="";
+  if(!activeTemplateId){
+    wrap.innerHTML = `<div class="status"><div>ℹ️</div><div>請先載入範本或套用模板庫</div></div>`;
+    return;
+  }
+  const prof=getActiveProfile();
+  const fields=prof.fields||[];
+  const currentPage = Number(document.getElementById("previewPage")?.value || 1);
+
+  refreshActiveFieldOptions();
+
+  const groups=splitFieldsByGroup(fields,currentPage);
+  wrap.innerHTML =
+    groupZoneHtml("header","📌 Header（全頁共用）", groups.header) +
+    groupZoneHtml("body","📝 Body（本頁）", groups.body) +
+    groupZoneHtml("footer","✍️ Footer（全頁共用）", groups.footer);
+
+  document.querySelectorAll(".dragRow").forEach(row=>{
+    const idx=Number(row.dataset.index);
+    const f=prof.fields[idx];
+
+    row.querySelector('[data-act="toggle"]').addEventListener("change",(e)=>{
+      prof.fields[idx].enabled=e.target.checked;
+      saveTemplateProfile(activeTemplateId,{fields:prof.fields});
+      redrawOverlay();
+      renderPageTabs();
+    });
+    row.querySelector('[data-act="locate"]').addEventListener("click",()=>{
+      showTab("preview");
+      refreshActiveFieldOptions();
+      $("activeField").value = "custom::"+f.id;
+      showStatus("previewStatus","ok",`已選定定位：${escapeHtml(f.label)}（可點一下或直接拖拉）`);
+    });
+    row.querySelector('[data-act="del"]').addEventListener("click",()=>{
+      prof.fields.splice(idx,1);
+      saveTemplateProfile(activeTemplateId,{fields:prof.fields});
+      renderFieldList();
+      redrawOverlay();
+      renderPageTabs();
+    });
+    row.querySelectorAll("input").forEach(inp=>{
+      inp.addEventListener("input",()=>{
+        const k=inp.dataset.k;
+        if(!k) return;
+        if(k==="defaultValue") prof.fields[idx].defaultValue=inp.value;
+        else prof.fields[idx][k]=Number(inp.value);
+        saveTemplateProfile(activeTemplateId,{fields:prof.fields});
+        redrawOverlay();
+      });
+    });
+  });
+
+  attachGroupDropHandlers();
+}
+
+/* =========================
+  Add field (text/image + group + allPages)
+========================= */
+$("btnAddField").addEventListener("click",()=>{
+  if(!activeTemplateId) return showStatus("fieldStatus","bad","請先載入範本或套用模板庫");
+  const prof=getActiveProfile();
+
+  const label=$("newFieldLabel").value.trim();
+  const key=$("newFieldKey").value.trim();
+  const source=$("newFieldSource").value;
+  const defaultValue=$("newFieldDefault").value;
+  const group = $("newFieldGroup")?.value || "body";
+
+  const curPage = Number($("previewPage")?.value || $("newFieldPage")?.value || 1);
+  const isGlobal = (group==="header" || group==="footer");
+
+  if(!label) return showStatus("fieldStatus","bad","請填顯示名稱 label");
+  if(source!=="image" && !key) return showStatus("fieldStatus","bad","文字欄位請填 key（例如 invoiceNo）");
+
+  if(source==="image"){
+    if(!tmpImageDataUrl) return showStatus("fieldStatus","bad","請先上傳圖片（imgUpload）");
+    const w=parseFloat($("imgWidth").value||"120");
+    const h=parseFloat($("imgHeight").value||"120");
+    const bgMode=$("imgBgMode").value||"transparent";
+    const bgColor=$("imgBgColor").value||"#ffffff";
+    const opacity=parseFloat($("imgOpacity").value||"1");
+
+    prof.fields.push({
+      id: uid(),
+      label,
+      key: key || label,
+      source:"image",
+      imageData: tmpImageDataUrl,
+      page: isGlobal ? 1 : curPage,
+      x:0, y:0,
+      width: Number.isFinite(w)?w:120,
+      height: Number.isFinite(h)?h:120,
+      enabled:true,
+      group,
+      allPages: isGlobal,
+      bgMode, bgColor,
+      opacity: Number.isFinite(opacity)?opacity:1
+    });
+
+    saveTemplateProfile(activeTemplateId,{fields:prof.fields});
+    renderFieldList();
+    redrawOverlay();
+    renderPageTabs();
+    showStatus("fieldStatus","ok","已新增圖片欄位（可在 Preview 拖拉/縮放）");
+    return;
+  }
+
+  if(prof.fields.some(f=>String(f.key||"").toLowerCase()===key.toLowerCase()))
+    return showStatus("fieldStatus","bad","此 key 已存在");
+
+  prof.fields.push({
+    id: uid(),
+    label,
+    key,
+    source,
+    defaultValue,
+    page: isGlobal ? 1 : curPage,
+    x:0, y:0,
+    size:10,
+    enabled:true,
+    group,
+    allPages: isGlobal
+  });
+
+  saveTemplateProfile(activeTemplateId,{fields:prof.fields});
+  renderFieldList();
+  redrawOverlay();
+  renderPageTabs();
+  showStatus("fieldStatus","ok","已新增欄位");
+});
+
+$("btnClearFields").addEventListener("click",()=>{
+  if(!activeTemplateId) return;
+  const prof=getActiveProfile();
+  prof.fields=[];
+  saveTemplateProfile(activeTemplateId,{fields:[]});
+  renderFieldList();
+  redrawOverlay();
+  renderPageTabs();
+});
+
+/* =========================
+  Base enabled + line settings
+========================= */
+function saveLineAndBaseSettings(){
+  if(!activeTemplateId) return;
+  const prof=getActiveProfile();
+  const lhPrev=parseFloat($("lineHeightPreview").value||"1.2");
+  const lhPdf=parseFloat($("lineHeightPdf").value||"1.2");
+  const mode=$("labelValueMode").value||"sameLine";
+  const baseEnabled={
+    awb:$("base_awb").checked,
+    asn:$("base_asn").checked,
+    ra:$("base_ra").checked,
+    dt:$("base_dt").checked
+  };
+  saveTemplateProfile(activeTemplateId,{
+    lineHeightPreview:Math.min(3,Math.max(0.8,lhPrev)),
+    lineHeightPdf:Math.min(3,Math.max(0.8,lhPdf)),
+    labelValueMode:mode,
+    baseEnabled
+  });
+  refreshActiveFieldOptions();
+  redrawOverlay();
+}
+["lineHeightPreview","lineHeightPdf"].forEach(id=>$(id).addEventListener("input", saveLineAndBaseSettings));
+$("labelValueMode").addEventListener("change", saveLineAndBaseSettings);
+["base_awb","base_asn","base_ra","base_dt"].forEach(id=>$(id).addEventListener("change", saveLineAndBaseSettings));
+
+/* ======================
+  ✅ 一鍵：基礎欄位 → Header（全頁欄位）+ 還原
+====================== */
+const SYS_KEYS = {
+  awb: "__base_awb__",
+  asn: "__base_company__",
+  ra:  "__base_ra__",
+  dt:  "__base_date__"
+};
+function ensureBaseHeaderFields(){
+  if(!activeTemplateId) return false;
+  const prof=getActiveProfile();
+  const base=readBasePos();
+  const desired=[
+    {label:"AWB", key:SYS_KEYS.awb, tpl:"{{awb}}", x:base.awb.x, y:base.awb.y, size:base.awb.s},
+    {label:"Company", key:SYS_KEYS.asn, tpl:"{{company}}", x:base.asn.x, y:base.asn.y, size:base.asn.s},
+    {label:"RA", key:SYS_KEYS.ra, tpl:"{{ra}}", x:base.ra.x, y:base.ra.y, size:base.ra.s},
+    {label:"Date", key:SYS_KEYS.dt, tpl:"{{date}}", x:base.dt.x, y:base.dt.y, size:base.dt.s},
+  ];
+  let changed=false;
+  prof.fields = prof.fields || [];
+
+  for(const d of desired){
+    const idx=prof.fields.findIndex(f=>String(f.key||"")===d.key);
+    if(idx>=0){
+      const f=prof.fields[idx];
+      f.label=d.label;
+      f.source="var";
+      f.defaultValue=d.tpl;
+      f.x=d.x; f.y=d.y; f.size=d.size;
+      f.group="header";
+      f.allPages=true;
+      f.page=1;
+      f.enabled=(f.enabled!==false);
+      changed=true;
+    }else{
+      prof.fields.push({
+        id: uid(),
+        label:d.label,
+        key:d.key,
+        source:"var",
+        defaultValue:d.tpl,
+        page:1,
+        x:d.x, y:d.y,
+        size:d.size,
+        enabled:true,
+        group:"header",
+        allPages:true
+      });
+      changed=true;
+    }
+  }
+
+  prof.baseEnabled = prof.baseEnabled || {awb:true,asn:true,ra:true,dt:true};
+  prof.baseEnabled.awb=false;
+  prof.baseEnabled.asn=false;
+  prof.baseEnabled.ra=false;
+  prof.baseEnabled.dt=false;
+
+  if($("base_awb")) $("base_awb").checked=false;
+  if($("base_asn")) $("base_asn").checked=false;
+  if($("base_ra"))  $("base_ra").checked=false;
+  if($("base_dt"))  $("base_dt").checked=false;
+
+  saveTemplateProfile(activeTemplateId,{fields:prof.fields, baseEnabled: prof.baseEnabled});
+  return changed;
+}
+function removeBaseHeaderFieldsAndRestore(){
+  if(!activeTemplateId) return false;
+  const prof=getActiveProfile();
+  prof.fields = (prof.fields||[]).filter(f=>!Object.values(SYS_KEYS).includes(String(f.key||"")));
+
+  prof.baseEnabled = prof.baseEnabled || {awb:true,asn:true,ra:true,dt:true};
+  prof.baseEnabled.awb=true;
+  prof.baseEnabled.asn=true;
+  prof.baseEnabled.ra=true;
+  prof.baseEnabled.dt=true;
+
+  if($("base_awb")) $("base_awb").checked=true;
+  if($("base_asn")) $("base_asn").checked=true;
+  if($("base_ra"))  $("base_ra").checked=true;
+  if($("base_dt"))  $("base_dt").checked=true;
+
+  saveTemplateProfile(activeTemplateId,{fields:prof.fields, baseEnabled: prof.baseEnabled});
+  return true;
+}
+$("btnConvertBaseToHeader")?.addEventListener("click", ()=>{
+  if(!activeTemplateId) return showStatus("fieldStatus","bad","請先載入範本或套用模板庫");
+  const ok=ensureBaseHeaderFields();
+  refreshActiveFieldOptions();
+  renderFieldList();
+  redrawOverlay();
+  renderPageTabs();
+  showStatus("fieldStatus","ok", ok
+    ? "已轉換：基礎欄位 → Header（全頁共用），並已關閉基礎欄位顯示"
+    : "已存在：已同步 Header 基礎欄位並關閉基礎顯示"
+  );
+});
+$("btnRestoreBaseFromHeader")?.addEventListener("click", ()=>{
+  if(!activeTemplateId) return showStatus("fieldStatus","bad","請先載入範本或套用模板庫");
+  removeBaseHeaderFieldsAndRestore();
+  refreshActiveFieldOptions();
+  renderFieldList();
+  redrawOverlay();
+  renderPageTabs();
+  showStatus("fieldStatus","ok","已還原：移除 Header 基礎欄位，並開回基礎欄位顯示");
+});
+
+/* =========================
+  Multi-page Preview: page select + tabs
+========================= */
+async function loadPreviewPages(){
+  if(!templateBytes) return;
+  const pdf = await pdfjsLib.getDocument({data: templateBytes}).promise;
+  previewNumPages = pdf.numPages || 1;
+  const sel = $("previewPage");
+  if(!sel) return;
+  const cur = sel.value || "1";
+  sel.innerHTML="";
+  for(let i=1;i<=previewNumPages;i++){
+    const opt=document.createElement("option");
+    opt.value=String(i);
+    opt.textContent=`第 ${i} 頁`;
+    sel.appendChild(opt);
+  }
+  sel.value = String(Math.min(Number(cur)||1, previewNumPages));
+  refreshNewFieldPageOptions();
+}
+function updateActiveTab(){
+  const cur = Number($("previewPage")?.value || 1);
+  document.querySelectorAll("#pageTabs button").forEach(btn=>{
+    btn.classList.toggle("active", Number(btn.dataset.page)===cur);
+  });
+}
+function setPreviewPage(page){
+  if($("previewPage")) $("previewPage").value = String(page);
+  updateActiveTab();
+  renderPreview();
+  renderFieldList();
+}
+function renderPageTabs(){
+  const wrap=$("pageTabs");
+  if(!wrap) return;
+  wrap.innerHTML="";
+  const cur = Number($("previewPage")?.value || 1);
+  const prof=getActiveProfile?.();
+  for(let i=1;i<=previewNumPages;i++){
+    const count=(prof?.fields||[]).filter(f=>Number(f.page||1)===i && (f.group||"body")==="body").length;
+    const btn=document.createElement("button");
+    btn.className="action";
+    btn.dataset.page=String(i);
+    btn.textContent=`第 ${i} 頁 (${count})`;
+    if(i===cur) btn.classList.add("active");
+    btn.onclick=()=>setPreviewPage(i);
+    wrap.appendChild(btn);
+  }
+}
+$("previewPage")?.addEventListener("change", ()=>{
+  updateActiveTab();
+  renderPreview();
+  renderFieldList();
+});
+
+/* =========================
+  Preview render + overlay + image move/resize + click定位
+========================= */
+function pdfPtToCanvasPx(xPt,yPt){
+  const dpr=window.devicePixelRatio||1;
+  const scale=previewViewport.scale;
+  const vb=previewViewport.viewBox;
+  const pageHeight=vb[3]-vb[1];
+  return {x: xPt*scale*dpr, y: (pageHeight-yPt)*scale*dpr};
+}
+function canvasPxToPdfDelta(dxPx,dyPx){
+  const dpr=window.devicePixelRatio||1;
+  const scale=previewViewport.scale;
+  return {dxPt: dxPx/(scale*dpr), dyPt: -dyPx/(scale*dpr)};
+}
+function pdfFontPtToCanvasPx(sizePt){
+  const dpr=window.devicePixelRatio||1;
+  const scale=previewViewport.scale;
+  return Math.max(10, sizePt*scale*dpr);
+}
+function getOverlayRecord(){
+  const commonAssignor=$("assignorName").value.trim();
+  const commonRA=normalizeRa($("raCode").value);
+  const commonDate=$("docDate").value;
+  const awb=currentRows[0]?.awbNo || parseAwbList($("awbList").value,1).unique[0] || "";
+  return {awbNo:awb, assignorName:commonAssignor, raCode:commonRA, docDate:commonDate, _src: currentRows[0]?._src || {}};
+}
+
+async function renderPreview(){
+  if(!templateBytes) return showStatus("previewStatus","bad","請先載入範本或套用模板庫");
+  await loadPreviewPages();
+  previewPdf = await pdfjsLib.getDocument({data: templateBytes}).promise;
+  previewNumPages = previewPdf.numPages || 1;
+
+  const pageNo = Number($("previewPage").value || 1);
+  const scale = Math.min(3, Math.max(0.5, parseFloat($("previewScale").value || "1.5")));
+  const page = await previewPdf.getPage(pageNo);
+  previewViewport = page.getViewport({scale});
+
+  const canvas=$("pdfCanvas");
+  const ctx=canvas.getContext("2d");
+  const dpr=window.devicePixelRatio||1;
+  canvas.width=Math.floor(previewViewport.width*dpr);
+  canvas.height=Math.floor(previewViewport.height*dpr);
+  canvas.style.width=Math.floor(previewViewport.width)+"px";
+  canvas.style.height=Math.floor(previewViewport.height)+"px";
+  const transform=dpr!==1?[dpr,0,0,dpr,0,0]:null;
+
+  await page.render({canvasContext:ctx,transform,viewport:previewViewport}).promise;
+  lastRenderedImageData = ctx.getImageData(0,0,canvas.width,canvas.height);
+
+  refreshActiveFieldOptions();
+  renderPageTabs();
+  updateActiveTab();
+  refreshNewFieldPageOptions();
+
+  showStatus("previewStatus","ok",`預覽已渲染：第 ${pageNo} 頁（可拖拉/縮放/跨頁）`);
+  redrawOverlay();
+}
+
+$("btnRenderPreview").addEventListener("click", renderPreview);
+$("btnToggleOverlay").addEventListener("click", ()=>{
+  overlayEnabled=!overlayEnabled;
+  redrawOverlay();
+});
+$("btnSavePos").addEventListener("click", ()=>{
+  saveBasePos();
+  showStatus("previewStatus","ok","已保存座標");
+});
+$("btnResetPos").addEventListener("click", ()=>{
+  applyBasePos(defaultPos);
+  saveBasePos();
+  redrawOverlay();
+});
+["p_awb_x","p_awb_y","p_awb_s","p_asn_x","p_asn_y","p_asn_s","p_ra_x","p_ra_y","p_ra_s","p_dt_x","p_dt_y","p_dt_s"]
+.forEach(id=>$(id).addEventListener("input", ()=>{scheduleSaveBasePos(); redrawOverlay();}));
+
+function rebuildOverlayItems(ctx){
+  overlayItems=[];
+  const prof=getActiveProfile();
+  const baseEnabled=prof?.baseEnabled || {awb:true,asn:true,ra:true,dt:true};
+  const rec=getOverlayRecord();
+  const base=readBasePos();
+  const curPage = Number($("previewPage").value || 1);
+  const mode=prof?.labelValueMode || "sameLine";
+  const lh=prof?.lineHeightPreview ?? 1.2;
+
+  function addTextItem(kind, id, label, value, xPt, yPt, sPt, setter){
+    const p=pdfPtToCanvasPx(xPt,yPt);
+    const fs=pdfFontPtToCanvasPx(sPt);
+    ctx.font=`${Math.round(fs)}px Arial`;
+    const lineGap = fs*lh;
+    const t1 = (mode==="twoLines") ? `${label}` : `${label}: ${value||""}`;
+    const t2 = (mode==="twoLines") ? `${value||""}` : "";
+    const w = Math.max(ctx.measureText(t1).width, t2?ctx.measureText(t2).width:0);
+    const h = (mode==="twoLines") ? (fs*1.2 + lineGap) : (fs*1.2);
+    overlayItems.push({ kind, id, rect:{x:p.x,y:p.y-h,w,h}, setter });
+  }
+
+  // base fields preview: page 1 only
+  if(curPage===1){
+    if(baseEnabled.awb) addTextItem("base","awb","AWB",rec.awbNo, base.awb.x, base.awb.y, base.awb.s, (dx,dy)=>{
+      base.awb.x+=dx; base.awb.y+=dy;
+      $("p_awb_x").value=Math.round(base.awb.x);
+      $("p_awb_y").value=Math.round(base.awb.y);
+      scheduleSaveBasePos();
+    });
+    if(baseEnabled.asn) addTextItem("base","asn","Company",rec.assignorName, base.asn.x, base.asn.y, base.asn.s, (dx,dy)=>{
+      base.asn.x+=dx; base.asn.y+=dy;
+      $("p_asn_x").value=Math.round(base.asn.x);
+      $("p_asn_y").value=Math.round(base.asn.y);
+      scheduleSaveBasePos();
+    });
+    if(baseEnabled.ra) addTextItem("base","ra","RA",rec.raCode, base.ra.x, base.ra.y, base.ra.s, (dx,dy)=>{
+      base.ra.x+=dx; base.ra.y+=dy;
+      $("p_ra_x").value=Math.round(base.ra.x);
+      $("p_ra_y").value=Math.round(base.ra.y);
+      scheduleSaveBasePos();
+    });
+    if(baseEnabled.dt) addTextItem("base","dt","Date",formatDate(rec.docDate), base.dt.x, base.dt.y, base.dt.s, (dx,dy)=>{
+      base.dt.x+=dx; base.dt.y+=dy;
+      $("p_dt_x").value=Math.round(base.dt.x);
+      $("p_dt_y").value=Math.round(base.dt.y);
+      scheduleSaveBasePos();
+    });
+  }
+
+  const common={assignorName:rec.assignorName, raCode:rec.raCode, docDate:rec.docDate};
+
+  (prof?.fields||[]).forEach(f=>{
+    if(f.enabled===false) return;
+    const g=(f.group||"body");
+    const isGlobal = f.allPages || g==="header" || g==="footer";
+    if(!isGlobal && Number(f.page||1)!==curPage) return;
+
+    if(f.source==="image" && f.imageData){
+      const xPt=Number(f.x||0), yPt=Number(f.y||0);
+      const wPt=Number(f.width||100), hPt=Number(f.height||100);
+      const pTL = pdfPtToCanvasPx(xPt, yPt + hPt);
+      const wPx = wPt * previewViewport.scale * (window.devicePixelRatio||1);
+      const hPx = hPt * previewViewport.scale * (window.devicePixelRatio||1);
+      const rect = {x:pTL.x, y:pTL.y, w:wPx, h:hPx};
+      const resizeRect = {x:rect.x+rect.w-12, y:rect.y+rect.h-12, w:14, h:14};
+
+      overlayItems.push({
+        kind:"image",
+        id:f.id,
+        rect,
+        resizeRect,
+        moveSetter:(dxPt,dyPt)=>{
+          const prof2=getActiveProfile();
+          const idx=prof2.fields.findIndex(z=>z.id===f.id);
+          if(idx>=0){
+            prof2.fields[idx].x = Number(prof2.fields[idx].x||0) + dxPt;
+            prof2.fields[idx].y = Number(prof2.fields[idx].y||0) + dyPt;
+            saveTemplateProfile(activeTemplateId,{fields:prof2.fields});
+          }
+        },
+        resizeSetter:(dWPt,dHPt)=>{
+          const prof2=getActiveProfile();
+          const idx=prof2.fields.findIndex(z=>z.id===f.id);
+          if(idx>=0){
+            const curW=Number(prof2.fields[idx].width||100);
+            const curH=Number(prof2.fields[idx].height||100);
+            const newW=Math.max(10, curW + dWPt);
+            const newH=Math.max(10, curH + dHPt);
+            // top-fixed
+            prof2.fields[idx].y = Number(prof2.fields[idx].y||0) - (newH - curH);
+            prof2.fields[idx].width=newW;
+            prof2.fields[idx].height=newH;
+            saveTemplateProfile(activeTemplateId,{fields:prof2.fields});
+          }
+        }
+      });
+      return;
+    }
+
+    const val=resolveFieldValue(f, rec, common);
+    addTextItem("custom", f.id, f.label, val, Number(f.x||0), Number(f.y||0), Number(f.size||10), (dx,dy)=>{
+      const prof2=getActiveProfile();
+      const idx=prof2.fields.findIndex(z=>z.id===f.id);
+      if(idx>=0){
+        prof2.fields[idx].x = Number(prof2.fields[idx].x||0) + dx;
+        prof2.fields[idx].y = Number(prof2.fields[idx].y||0) + dy;
+        saveTemplateProfile(activeTemplateId,{fields:prof2.fields});
+      }
+    });
+  });
+}
+
+function redrawOverlay(){
+  if(!previewViewport || !lastRenderedImageData) return;
+  const canvas=$("pdfCanvas");
+  const ctx=canvas.getContext("2d");
+  ctx.putImageData(lastRenderedImageData,0,0);
+
+  overlayItems=[];
+  if(!overlayEnabled || !activeTemplateId) return;
+
+  const prof=getActiveProfile();
+  const rec=getOverlayRecord();
+  const base=readBasePos();
+  const curPage=Number($("previewPage").value||1);
+  const baseEnabled=prof?.baseEnabled || {awb:true,asn:true,ra:true,dt:true};
+  const lh=prof?.lineHeightPreview ?? 1.2;
+  const mode=prof?.labelValueMode || "sameLine";
+
+  ctx.save();
+  ctx.fillStyle=getComputedStyle(document.documentElement).getPropertyValue("--overlay").trim()||"rgba(239,68,68,.92)";
+  ctx.strokeStyle=getComputedStyle(document.documentElement).getPropertyValue("--overlayStroke").trim()||"rgba(0,0,0,.35)";
+  ctx.lineWidth=3;
+
+  function drawLabelValue(label,value,xPt,yPt,sPt){
+    const p=pdfPtToCanvasPx(xPt,yPt);
+    const fs=pdfFontPtToCanvasPx(sPt);
+    ctx.font=`${Math.round(fs)}px Arial`;
+    const lineGap=fs*lh;
+    if(mode==="twoLines"){
+      const t1=`${label}`;
+      const t2=`${value||""}`;
+      ctx.strokeText(t1,p.x,p.y); ctx.fillText(t1,p.x,p.y);
+      ctx.strokeText(t2,p.x,p.y+lineGap); ctx.fillText(t2,p.x,p.y+lineGap);
+    }else{
+      const t=`${label}: ${value||""}`;
+      ctx.strokeText(t,p.x,p.y); ctx.fillText(t,p.x,p.y);
+    }
+  }
+
+  if(curPage===1){
+    if(baseEnabled.awb) drawLabelValue("AWB",rec.awbNo, base.awb.x, base.awb.y, base.awb.s);
+    if(baseEnabled.asn) drawLabelValue("Company",rec.assignorName, base.asn.x, base.asn.y, base.asn.s);
+    if(baseEnabled.ra)  drawLabelValue("RA",rec.raCode, base.ra.x, base.ra.y, base.ra.s);
+    if(baseEnabled.dt)  drawLabelValue("Date",formatDate(rec.docDate), base.dt.x, base.dt.y, base.dt.s);
+  }
+
+  const common={assignorName:rec.assignorName, raCode:rec.raCode, docDate:rec.docDate};
+
+  (prof?.fields||[]).forEach(f=>{
+    if(f.enabled===false) return;
+    const g=(f.group||"body");
+    const isGlobal = f.allPages || g==="header" || g==="footer";
+    if(!isGlobal && Number(f.page||1)!==curPage) return;
+
+    if(f.source==="image" && f.imageData){
+      const imgRec=getCachedImage(f.imageData);
+      if(!imgRec || !imgRec.loaded) return;
+
+      const xPt=Number(f.x||0), yPt=Number(f.y||0);
+      const wPt=Number(f.width||100), hPt=Number(f.height||100);
+      const pTL = pdfPtToCanvasPx(xPt, yPt + hPt);
+      const wPx = wPt * previewViewport.scale * (window.devicePixelRatio||1);
+      const hPx = hPt * previewViewport.scale * (window.devicePixelRatio||1);
+      const xPx = pTL.x;
+      const yPx = pTL.y;
+
+      if((f.bgMode||"transparent")==="transparent"){
+        drawChecker(ctx, xPx, yPx, wPx, hPx, 10);
+      }else{
+        ctx.fillStyle = (f.bgColor || "#ffffff");
+        ctx.fillRect(xPx, yPx, wPx, hPx);
+      }
+
+      ctx.globalAlpha = Number.isFinite(f.opacity) ? f.opacity : 1;
+      ctx.drawImage(imgRec.img, xPx, yPx, wPx, hPx);
+      ctx.globalAlpha = 1;
+
+      ctx.fillStyle = "rgba(59,130,246,.95)";
+      ctx.fillRect(xPx + wPx - 10, yPx + hPx - 10, 10, 10);
+      return;
+    }
+
+    const val=resolveFieldValue(f, rec, common);
+    drawLabelValue(f.label,val, Number(f.x||0), Number(f.y||0), Number(f.size||10));
+  });
+
+  rebuildOverlayItems(ctx);
+  ctx.restore();
+}
+
+function findHitItem(x,y){
+  for(let i=overlayItems.length-1;i>=0;i--){
+    const it=overlayItems[i];
+    if(it.resizeRect){
+      const rr=it.resizeRect;
+      if(x>=rr.x && x<=rr.x+rr.w && y>=rr.y && y<=rr.y+rr.h){
+        return {item:it, mode:"resize"};
+      }
+    }
+    const r=it.rect;
+    if(r && x>=r.x && x<=r.x+r.w && y>=r.y && y<=r.y+r.h){
+      return {item:it, mode:"move"};
+    }
+  }
+  return null;
+}
+
+/* =========================
+  Drag cross-page + edge hints (只搬 Body；Header/Footer 不搬)
+========================= */
+let pageSwitchInFlight = false;
+let lastAutoSwitchAt = 0;
+const AUTO_SWITCH_COOLDOWN_MS = 350;
+const AUTO_SWITCH_EDGE_PX = 28;
+
+function showPageEdgeHint(which, on){
+  const top = $("pageEdgeTop");
+  const bot = $("pageEdgeBottom");
+  if(!top || !bot) return;
+  if(which==="top") top.style.display = on ? "flex":"none";
+  else if(which==="bottom") bot.style.display = on ? "flex":"none";
+  else { top.style.display="none"; bot.style.display="none"; }
+}
+function updateEdgeHintsWhileDragging(ev){
+  const canvas=$("pdfCanvas");
+  if(!canvas) return;
+  if(!dragState?.active){
+    showPageEdgeHint("none", false);
+    return;
+  }
+  const rect = canvas.getBoundingClientRect();
+  const yCss = ev.clientY - rect.top;
+  const cur = Number($("previewPage")?.value || 1);
+  const max = previewNumPages || previewPdf?.numPages || 1;
+  const nearTop = yCss <= AUTO_SWITCH_EDGE_PX;
+  const nearBot = yCss >= (rect.height - AUTO_SWITCH_EDGE_PX);
+  showPageEdgeHint("top", nearTop && cur > 1);
+  showPageEdgeHint("bottom", nearBot && cur < max);
+  if(!(nearTop && cur>1) && !(nearBot && cur<max)) showPageEdgeHint("none", false);
+}
+function tryAutoSwitchPageWhileDragging(ev){
+  if(!previewPdf || !previewViewport) return false;
+  if(!dragState?.active || !dragState?.item) return false;
+  if(pageSwitchInFlight) return false;
+
+  const now = Date.now();
+  if(now - lastAutoSwitchAt < AUTO_SWITCH_COOLDOWN_MS) return false;
+
+  const canvas = $("pdfCanvas");
+  const rect = canvas.getBoundingClientRect();
+  const yCss = ev.clientY - rect.top;
+
+  const cur = Number($("previewPage")?.value || 1);
+  const max = previewNumPages || previewPdf.numPages || 1;
+
+  let next = cur;
+  if(yCss <= AUTO_SWITCH_EDGE_PX && cur > 1) next = cur - 1;
+  else if(yCss >= (rect.height - AUTO_SWITCH_EDGE_PX) && cur < max) next = cur + 1;
+  else return false;
+
+  lastAutoSwitchAt = now;
+  pageSwitchInFlight = true;
+
+  // only move Body fields (non-global)
+  try{
+    const it = dragState.item;
+    const prof = getActiveProfile?.();
+    const idx = prof?.fields?.findIndex(f=>f.id===it.id) ?? -1;
+    if(idx >= 0){
+      const g = (prof.fields[idx].group || "body");
+      const isGlobal = prof.fields[idx].allPages || g==="header" || g==="footer";
+      if(!isGlobal){
+        prof.fields[idx].page = next;
+        saveTemplateProfile(activeTemplateId,{fields: prof.fields});
+      }
+    }
+  }catch{}
+
+  setPreviewPage(next);
+
+  Promise.resolve()
+    .then(()=> renderPreview())
+    .then(()=>{ dragState.lastX = null; dragState.lastY = null; })
+    .finally(()=>{
+      pageSwitchInFlight = false;
+      renderFieldList?.();
+      renderPageTabs();
+    });
+
+  return true;
+}
+
+$("pageEdgeTop")?.addEventListener("click", ()=>{
+  const cur=Number($("previewPage").value||1);
+  if(cur>1) setPreviewPage(cur-1);
+});
+$("pageEdgeBottom")?.addEventListener("click", ()=>{
+  const cur=Number($("previewPage").value||1);
+  if(cur<previewNumPages) setPreviewPage(cur+1);
+});
+
+$("pdfCanvas").addEventListener("mousedown",(ev)=>{
+  if(!previewViewport) return;
+  const canvas=$("pdfCanvas");
+  const rect=canvas.getBoundingClientRect();
+  const sx=canvas.width/rect.width;
+  const sy=canvas.height/rect.height;
+  const x=(ev.clientX-rect.left)*sx;
+  const y=(ev.clientY-rect.top)*sy;
+  const hit=findHitItem(x,y);
+  if(hit){
+    dragState.active=true;
+    dragState.item=hit.item;
+    dragState.mode=hit.mode;
+    dragState.lastX=x;
+    dragState.lastY=y;
+    dragState.moved=false;
+    ev.preventDefault();
+  }
+});
+
+window.addEventListener("mousemove",(ev)=>{
+  updateEdgeHintsWhileDragging(ev);
+  tryAutoSwitchPageWhileDragging(ev);
+
+  if(!dragState.active || !dragState.item) return;
+  const canvas=$("pdfCanvas");
+  const rect=canvas.getBoundingClientRect();
+  const sx=canvas.width/rect.width;
+  const sy=canvas.height/rect.height;
+  const x=(ev.clientX-rect.left)*sx;
+  const y=(ev.clientY-rect.top)*sy;
+
+  if(dragState.lastX===null || dragState.lastY===null){
+    dragState.lastX=x; dragState.lastY=y;
+    return;
+  }
+
+  const dxPx=x-dragState.lastX;
+  const dyPx=y-dragState.lastY;
+  dragState.lastX=x; dragState.lastY=y;
+  dragState.moved=true;
+
+  if(dragState.item.kind==="image"){
+    if(dragState.mode==="move"){
+      const {dxPt,dyPt}=canvasPxToPdfDelta(dxPx,dyPx);
+      dragState.item.moveSetter(dxPt,dyPt);
+    }else{
+      const dpr=window.devicePixelRatio||1;
+      const scale=previewViewport.scale;
+      const dWPt = dxPx/(scale*dpr);
+      const dHPt = dyPx/(scale*dpr);
+      dragState.item.resizeSetter(dWPt,dHPt);
+    }
+  }else{
+    const {dxPt,dyPt}=canvasPxToPdfDelta(dxPx,dyPx);
+    dragState.item.setter(dxPt,dyPt);
+  }
+
+  redrawOverlay();
+});
+
+window.addEventListener("mouseup",()=>{
+  if(!dragState.active) return;
+  dragState.active=false;
+  showPageEdgeHint("none", false);
+  if(dragState.moved){
+    saveBasePos();
+    renderFieldList();
+    renderPageTabs();
+    showStatus("previewStatus","ok","已更新位置（已保存）");
+  }
+  dragState.item=null;
+  dragState.moved=false;
+});
+
+/* click定位：基礎欄位/自訂文字欄位 */
+$("pdfCanvas").addEventListener("click",(ev)=>{
+  if(dragState.moved) return;
+  if(!previewViewport) return;
+  const rect=$("pdfCanvas").getBoundingClientRect();
+  const cx=ev.clientX-rect.left;
+  const cy=ev.clientY-rect.top;
+  const vb=previewViewport.viewBox;
+  const wPt=vb[2]-vb[0];
+  const hPt=vb[3]-vb[1];
+  const xPt=(cx/rect.width)*wPt;
+  const yTop=(cy/rect.height)*hPt;
+  const yPt=hPt-yTop;
+  const r=v=>Math.round(v);
+
+  const field=$("activeField").value;
+  if(field.startsWith("custom::")){
+    const id=field.split("::")[1];
+    const prof=getActiveProfile();
+    const idx=prof.fields.findIndex(f=>f.id===id);
+    if(idx>=0){
+      prof.fields[idx].x=r(xPt);
+      prof.fields[idx].y=r(yPt);
+      saveTemplateProfile(activeTemplateId,{fields:prof.fields});
+      renderFieldList();
+      redrawOverlay();
+      renderPageTabs();
+    }
+    return;
+  }
+
+  if(Number($("previewPage").value||1)!==1) return;
+  if(field==="awb"){ $("p_awb_x").value=r(xPt); $("p_awb_y").value=r(yPt); }
+  if(field==="asn"){ $("p_asn_x").value=r(xPt); $("p_asn_y").value=r(yPt); }
+  if(field==="ra"){ $("p_ra_x").value=r(xPt); $("p_ra_y").value=r(yPt); }
+  if(field==="dt"){ $("p_dt_x").value=r(xPt); $("p_dt_y").value=r(yPt); }
+  scheduleSaveBasePos();
+  redrawOverlay();
+});
+
+/* =========================
+  Template load/cache + thumb
+========================= */
+async function renderTemplateThumb(){
+  if(!templateBytes) return;
+  const canvas=$("tplThumb");
+  const ctx=canvas.getContext("2d");
+  const pdf=await pdfjsLib.getDocument({data:templateBytes}).promise;
+  const page=await pdf.getPage(1);
+  const viewport=page.getViewport({scale:0.45});
+  const dpr=window.devicePixelRatio||1;
+  canvas.width=Math.floor(viewport.width*dpr);
+  canvas.height=Math.floor(viewport.height*dpr);
+  canvas.style.width=Math.floor(viewport.width)+"px";
+  canvas.style.height=Math.floor(viewport.height)+"px";
+  const transform=dpr!==1?[dpr,0,0,dpr,0,0]:null;
+  await page.render({canvasContext:ctx,transform,viewport}).promise;
+}
+async function onTemplateLoaded(){
+  activeTemplateId = await computeTemplateId(templateBytes, templateName);
+  const prof = ensureTemplateProfile(activeTemplateId);
+  $("tplTag").value = prof.tag || "UTK";
+  $("lineHeightPreview").value = prof.lineHeightPreview ?? 1.2;
+  $("lineHeightPdf").value = prof.lineHeightPdf ?? 1.2;
+  $("labelValueMode").value = prof.labelValueMode ?? "sameLine";
+  $("base_awb").checked = prof.baseEnabled?.awb !== false;
+  $("base_asn").checked = prof.baseEnabled?.asn !== false;
+  $("base_ra").checked = prof.baseEnabled?.ra !== false;
+  $("base_dt").checked = prof.baseEnabled?.dt !== false;
+
+  loadBasePos();
+  refreshActiveFieldOptions();
+  await loadPreviewPages();
+  renderPageTabs();
+  updateActiveTab();
+  refreshNewFieldPageOptions();
+  renderFieldList();
+  await renderTemplateThumb();
+  showStatus("tplStatus","ok",`已載入範本：${escapeHtml(templateName)}（templateId: <span class="mono">${escapeHtml(activeTemplateId)}</span>）`);
+}
+$("tplFile").addEventListener("change", async ()=>{
+  const f=$("tplFile").files?.[0];
+  if(!f) return;
+  templateBytes = new Uint8Array(await f.arrayBuffer());
+  templateName = f.name;
+  await onTemplateLoaded();
+  await renderLibrary();
+});
+$("btnCacheTpl").addEventListener("click", async ()=>{
+  if(!templateBytes) return showStatus("tplStatus","bad","請先載入範本");
+  await idbSet(CACHE_TPL_BYTES, templateBytes.buffer);
+  await idbSet(CACHE_TPL_NAME, templateName||"template.pdf");
+  showStatus("tplStatus","ok","已存入快取");
+});
+$("btnLoadTplCache").addEventListener("click", async ()=>{
+  const buf=await idbGet(CACHE_TPL_BYTES);
+  const name=await idbGet(CACHE_TPL_NAME);
+  if(!buf) return showStatus("tplStatus","bad","找不到快取");
+  templateBytes=new Uint8Array(buf);
+  templateName=name||"template.pdf";
+  await onTemplateLoaded();
+  await renderLibrary();
+});
+$("btnClearTplCache").addEventListener("click", async ()=>{
+  await idbDel(CACHE_TPL_BYTES);
+  await idbDel(CACHE_TPL_NAME);
+  showStatus("tplStatus","ok","已清除快取");
+});
+$("tplTag").addEventListener("input", ()=>{
+  if(!activeTemplateId) return;
+  saveTemplateProfile(activeTemplateId, {tag: $("tplTag").value.trim()||"UTK"});
+});
+
+/* =========================
+  Export/Import config
+========================= */
+function exportCurrentConfig(){
+  if(!activeTemplateId) return null;
+  const prof=getActiveProfile();
+  let baseAll={}; try{ baseAll=JSON.parse(localStorage.getItem(KEY_POS_BASE)||"{}"); }catch{}
+  return {
+    templateId: activeTemplateId,
+    tag: prof.tag,
+    lineHeightPreview: prof.lineHeightPreview,
+    lineHeightPdf: prof.lineHeightPdf,
+    labelValueMode: prof.labelValueMode,
+    baseEnabled: prof.baseEnabled,
+    basePos: baseAll[activeTemplateId] || null,
+    fields: prof.fields || []
+  };
+}
+async function applyConfigToCurrentTemplate(cfg){
+  if(!activeTemplateId) return;
+  saveTemplateProfile(activeTemplateId,{
+    tag: cfg.tag || "UTK",
+    fields: (cfg.fields||[]).map(x=>({enabled:true, ...x, group:(x.group||"body"), allPages:(x.allPages ?? ((x.group==="header"||x.group==="footer"))) })),
+    lineHeightPreview: cfg.lineHeightPreview ?? 1.2,
+    lineHeightPdf: cfg.lineHeightPdf ?? 1.2,
+    labelValueMode: cfg.labelValueMode ?? "sameLine",
+    baseEnabled: cfg.baseEnabled ?? {awb:true,asn:true,ra:true,dt:true},
+  });
+  if(cfg.basePos){
+    let all={}; try{all=JSON.parse(localStorage.getItem(KEY_POS_BASE)||"{}");}catch{}
+    all[activeTemplateId]=cfg.basePos;
+    localStorage.setItem(KEY_POS_BASE, JSON.stringify(all));
+  }
+  await onTemplateLoaded();
+}
+$("btnExportConfig").addEventListener("click", ()=>{
+  const cfg = exportCurrentConfig();
+  if(!cfg) return showStatus("tplStatus","bad","請先載入範本");
+  downloadBlob(new Blob([JSON.stringify(cfg,null,2)],{type:"application/json"}), `UTK_config_${Date.now()}.json`);
+});
+$("btnExportBundle").addEventListener("click", async ()=>{
+  const cfg = exportCurrentConfig();
+  if(!cfg || !templateBytes) return showStatus("tplStatus","bad","請先載入範本");
+  const zip=new JSZip();
+  zip.file("config.json", JSON.stringify(cfg,null,2));
+  zip.file("template.pdf", templateBytes, {binary:true});
+  const blob=await zip.generateAsync({type:"blob"});
+  downloadBlob(blob, `UTK_bundle_${Date.now()}.zip`);
+});
+$("btnImportConfig").addEventListener("click", ()=> $("importConfigFile").click());
+$("btnImportBundle").addEventListener("click", ()=> $("importBundleFile").click());
+
+$("importConfigFile").addEventListener("change", async ()=>{
+  const f=$("importConfigFile").files?.[0];
+  if(!f) return;
+  if(!templateBytes) return showStatus("tplStatus","bad","請先載入範本");
+  let data=null;
+  try{ data=JSON.parse(await f.text()); }catch{ return showStatus("tplStatus","bad","JSON 解析失敗"); }
+  await applyConfigToCurrentTemplate(data);
+  showStatus("tplStatus","ok","已匯入 JSON 並套用到目前模板");
+});
+$("importBundleFile").addEventListener("change", async ()=>{
+  const f=$("importBundleFile").files?.[0];
+  if(!f) return;
+  const zip=await JSZip.loadAsync(f);
+  const cfgText=await zip.file("config.json")?.async("string");
+  const pdfBytes=await zip.file("template.pdf")?.async("uint8array");
+  if(!cfgText || !pdfBytes) return showStatus("tplStatus","bad","ZIP 必須包含 config.json + template.pdf");
+  let cfg=null;
+  try{ cfg=JSON.parse(cfgText); }catch{ return showStatus("tplStatus","bad","config.json 解析失敗"); }
+  templateBytes=pdfBytes;
+  templateName="template.pdf";
+  await onTemplateLoaded();
+  await applyConfigToCurrentTemplate(cfg);
+  showStatus("tplStatus","ok","已匯入 ZIP Bundle（PDF+設定）");
+});
+
+/* =========================
+  Font (cache)
+========================= */
+$("btnLoadFontFromPath").addEventListener("click", async ()=>{
+  try{
+    const res=await fetch("fonts/utk-font.ttf");
+    if(!res.ok) throw 1;
+    const buf=await res.arrayBuffer();
+    customFontBytes=new Uint8Array(buf);
+    await idbSet(CACHE_FONT_BYTES, customFontBytes.buffer);
+    showStatus("fontStatus","ok","已載入 fonts/utk-font.ttf 並存快取");
+  }catch{
+    showStatus("fontStatus","bad","找不到 fonts/utk-font.ttf");
+  }
+});
+$("fontFile").addEventListener("change", async ()=>{
+  const f=$("fontFile").files?.[0];
+  if(!f) return;
+  customFontBytes=new Uint8Array(await f.arrayBuffer());
+  showStatus("fontStatus","ok",`已載入字型：${escapeHtml(f.name)}`);
+});
+$("btnCacheFont").addEventListener("click", async ()=>{
+  if(!customFontBytes) return showStatus("fontStatus","bad","請先載入字型");
+  await idbSet(CACHE_FONT_BYTES, customFontBytes.buffer);
+  showStatus("fontStatus","ok","已存快取");
+});
+$("btnLoadFontCache").addEventListener("click", async ()=>{
+  const buf=await idbGet(CACHE_FONT_BYTES);
+  if(!buf) return showStatus("fontStatus","bad","找不到快取");
+  customFontBytes=new Uint8Array(buf);
+  showStatus("fontStatus","ok","已從快取載入字型");
+});
+$("btnClearFontCache").addEventListener("click", async ()=>{
+  await idbDel(CACHE_FONT_BYTES);
+  customFontBytes=null;
+  showStatus("fontStatus","ok","已清除字型快取");
+});
+
+/* =========================
+  RA groups
+========================= */
+function getGroups(){ try{return JSON.parse(localStorage.getItem(KEY_RA_GROUPS)||"[]")}catch{return []} }
+function setGroups(groups){ localStorage.setItem(KEY_RA_GROUPS, JSON.stringify(groups)); }
+function refreshGroupSelect(){
+  const sel=$("raGroupSelect");
+  const groups=[...getGroups()].sort((a,b)=>(a.name||"").localeCompare((b.name||""),"en",{sensitivity:"base"}));
+  sel.innerHTML="";
+  if(!groups.length){
+    const opt=document.createElement("option"); opt.value=""; opt.textContent="（未有）"; sel.appendChild(opt); return;
+  }
+  groups.forEach((g,i)=>{
+    const opt=document.createElement("option");
+    opt.value=String(i);
+    opt.textContent=`${g.name} (${g.code})`;
+    sel.appendChild(opt);
+  });
+  setGroups(groups);
+}
+function parseRaListText(text){
+  const lines=String(text||"").split("\n");
+  const out=[];
+  for(let line of lines){
+    line=line.trim();
+    if(!line) continue;
+    const m=line.match(/\b(RA\d{5})\b\s+(.+)/i);
+    if(!m) continue;
+    const code=m[1].toUpperCase();
+    let rest=m[2].trim();
+    const idx=rest.search(/[\u4e00-\u9fff]/);
+    if(idx>=0) rest=rest.slice(0,idx).trim();
+    const name=rest.replace(/\s{2,}.*/,"").trim();
+    if(name) out.push({code,name});
+  }
+  return out;
+}
+$("btnImportRaText").addEventListener("click", ()=>{
+  const imported=parseRaListText($("raImportText").value);
+  if(!imported.length) return showStatus("raStatus","bad","未解析到 RA（格式：RAxxxxx Company ...）");
+  let groups=getGroups();
+  const existing=new Set(groups.map(g=>normalizeRa(g.code)));
+  let added=0, dup=0;
+  for(const r of imported){
+    const c=normalizeRa(r.code);
+    if(existing.has(c)){dup++;continue;}
+    existing.add(c);
+    groups.push({name:r.name, code:c});
+    added++;
+  }
+  setGroups(groups);
+  refreshGroupSelect();
+  showStatus("raStatus","ok",`已匯入：新增 ${added}，略過重覆 ${dup}`);
+});
+$("btnClearRaAll").addEventListener("click", ()=>{
+  setGroups([]);
+  refreshGroupSelect();
+  showStatus("raStatus","ok","已清空");
+});
+$("btnSaveGroup").addEventListener("click", ()=>{
+  const name=$("raCompany").value.trim();
+  const code=normalizeRa($("raCodeInput").value);
+  if(!name||!code) return showStatus("raStatus","bad","Company/RA 不能空白");
+  if(!/^RA\d+$/.test(code)) return showStatus("raStatus","bad","RA 格式不正確");
+  const groups=getGroups();
+  if(groups.some(g=>normalizeRa(g.code)===code)) return showStatus("raStatus","bad","此 RA Code 已存在");
+  groups.push({name,code});
+  setGroups(groups);
+  refreshGroupSelect();
+  showStatus("raStatus","ok","已儲存");
+});
+$("btnUpdateGroup").addEventListener("click", ()=>{
+  const idx=parseInt($("raGroupSelect").value,10);
+  const groups=getGroups();
+  if(!Number.isFinite(idx)||!groups[idx]) return showStatus("raStatus","bad","請先選一組");
+  const name=$("raCompany").value.trim();
+  const code=normalizeRa($("raCodeInput").value);
+  if(!name||!code) return showStatus("raStatus","bad","Company/RA 不能空白");
+  if(groups.some((g,i)=>i!==idx && normalizeRa(g.code)===code)) return showStatus("raStatus","bad","此 RA Code 已存在於其他項目");
+  groups[idx]={name,code};
+  setGroups(groups);
+  refreshGroupSelect();
+  showStatus("raStatus","ok","已更新");
+});
+$("btnDeleteGroup").addEventListener("click", ()=>{
+  const idx=parseInt($("raGroupSelect").value,10);
+  const groups=getGroups();
+  if(!Number.isFinite(idx)||!groups[idx]) return showStatus("raStatus","bad","請先選一組");
+  groups.splice(idx,1);
+  setGroups(groups);
+  refreshGroupSelect();
+  showStatus("raStatus","ok","已刪除");
+});
+$("btnClearGroup").addEventListener("click", ()=>{
+  $("raCompany").value=""; $("raCodeInput").value="";
+});
+$("btnLoadGroup").addEventListener("click", ()=>{
+  const idx=parseInt($("raGroupSelect").value,10);
+  const groups=getGroups();
+  if(!Number.isFinite(idx)||!groups[idx]) return showStatus("raStatus","bad","請先選一組");
+  $("assignorName").value=groups[idx].name;
+  $("raCode").value=groups[idx].code;
+  showTab("import");
+});
+function renderRaSuggest(list){
+  const box=$("raSuggest");
+  box.innerHTML="";
+  if(!list.length){ box.style.display="none"; return; }
+  list.forEach(item=>{
+    const div=document.createElement("div");
+    div.style.padding="10px 12px";
+    div.style.cursor="pointer";
+    div.style.borderBottom="1px solid rgba(148,163,184,.12)";
+    div.textContent=`${item.name} (${item.code})`;
+    div.onclick=()=>{
+      $("raCompany").value=item.name;
+      $("raCodeInput").value=item.code;
+      box.style.display="none";
+    };
+    box.appendChild(div);
+  });
+  box.style.display="block";
+}
+function scoreMatch(name,q){
+  name=name.toLowerCase(); q=q.toLowerCase();
+  const idx=name.indexOf(q);
+  return idx===-1?9999:idx;
+}
+$("raCompany").addEventListener("input", ()=>{
+  const q=$("raCompany").value.trim();
+  if(!q){ $("raSuggest").style.display="none"; return; }
+  const groups=getGroups();
+  const ranked=groups.map(g=>({name:g.name, code:g.code, score:scoreMatch(g.name,q)}))
+    .filter(x=>x.score<9999).sort((a,b)=>a.score-b.score).slice(0,10);
+  renderRaSuggest(ranked);
+});
+document.addEventListener("click",(e)=>{
+  const box=$("raSuggest");
+  const input=$("raCompany");
+  if(!box) return;
+  if(e.target===input || box.contains(e.target)) return;
+  box.style.display="none";
+});
+
+/* =========================
+  Template Library (cards + search + category + click switch)
+========================= */
+function getLibMeta(){ try{return JSON.parse(localStorage.getItem(KEY_LIBRARY_META)||"{}")}catch{return {}} }
+function setLibMeta(obj){ localStorage.setItem(KEY_LIBRARY_META, JSON.stringify(obj)); }
+
+async function makeThumbFromPdfBytes(bytes){
+  const key = bytes.byteLength + ":" + (bytes[0]||0) + ":" + (bytes[1]||0);
+  if(thumbCache.has(key)) return thumbCache.get(key);
+  const pdf = await pdfjsLib.getDocument({data: bytes}).promise;
+  const page = await pdf.getPage(1);
+  const viewport = page.getViewport({scale: 0.28});
+  const canvas = document.createElement("canvas");
+  const ctx = canvas.getContext("2d");
+  canvas.width = Math.floor(viewport.width);
+  canvas.height = Math.floor(viewport.height);
+  await page.render({canvasContext:ctx, viewport}).promise;
+  const dataUrl = canvas.toDataURL("image/png");
+  thumbCache.set(key, dataUrl);
+  return dataUrl;
+}
+function refreshCategoryFilter(){
+  const meta=getLibMeta();
+  const sel=$("libCategoryFilter");
+  const cats=new Set(["all"]);
+  Object.values(meta).forEach(m=>cats.add(m.category||"未分類"));
+  sel.innerHTML="";
+  [...cats].forEach(c=>{
+    const opt=document.createElement("option");
+    opt.value=c; opt.textContent=c;
+    sel.appendChild(opt);
+  });
+}
+async function renderLibrary(){
+  const wrap=$("libGrid");
+  if(!wrap) return;
+  const meta=getLibMeta();
+  refreshCategoryFilter();
+
+  const search=($("libSearch")?.value||"").toLowerCase().trim();
+  const cat=$("libCategoryFilter")?.value||"all";
+  wrap.innerHTML="";
+
+  const names=Object.keys(meta).sort((a,b)=>a.localeCompare(b,"zh-Hant",{sensitivity:"base"}));
+  if(!names.length){
+    wrap.innerHTML = `<div class="status"><div>ℹ️</div><div>尚未有模板庫項目</div></div>`;
+    return;
+  }
+
+  for(const name of names){
+    const item=meta[name];
+    const category=item.category||"未分類";
+    if(search && !name.toLowerCase().includes(search)) continue;
+    if(cat!=="all" && category!==cat) continue;
+
+    const buf=await idbGet(item.pdfKey);
+    const bytes=buf?new Uint8Array(buf):null;
+    let thumbUrl="";
+    if(bytes) thumbUrl = await makeThumbFromPdfBytes(bytes);
+
+    const card=document.createElement("div");
+    card.className="libCard";
+    card.title="點擊套用（切換 PDF + 設定）";
+    card.innerHTML = `
+      <div class="thumb">${thumbUrl ? `<img src="${thumbUrl}">` : `<div class="tiny">No preview</div>`}</div>
+      <div class="libMeta">
+        <b>${escapeHtml(name)}</b>
+        <div class="tiny">📂 ${escapeHtml(category)} ・ ${item.updatedAt?escapeHtml(item.updatedAt.slice(0,10)):""}</div>
+        <div class="tiny">fields: ${(item.config?.fields?.length||0)} / tag: ##${escapeHtml(item.config?.tag||"UTK")}</div>
+        <div class="btns" style="margin-top:8px;">
+          <button class="action primary" data-act="apply">套用</button>
+          <button class="action" data-act="overwrite">覆蓋</button>
+          <button class="action danger" data-act="delete">刪除</button>
+        </div>
+      </div>
+    `;
+    const applyBtn=card.querySelector('[data-act="apply"]');
+    const overwriteBtn=card.querySelector('[data-act="overwrite"]');
+    const deleteBtn=card.querySelector('[data-act="delete"]');
+
+    applyBtn.onclick=(e)=>{ e.stopPropagation(); libApply(name); };
+    overwriteBtn.onclick=(e)=>{ e.stopPropagation(); libOverwrite(name); };
+    deleteBtn.onclick=(e)=>{ e.stopPropagation(); libDelete(name); };
+
+    card.addEventListener("click", ()=> libApply(name));
+    wrap.appendChild(card);
+  }
+}
+$("libSearch")?.addEventListener("input", renderLibrary);
+$("libCategoryFilter")?.addEventListener("change", renderLibrary);
+$("btnLibRefresh")?.addEventListener("click", ()=>{ thumbCache.clear(); renderLibrary(); });
+
+async function libSave(){
+  if(!templateBytes || !activeTemplateId) return showStatus("libStatus","bad","請先載入範本");
+  const name=$("libName").value.trim();
+  if(!name) return showStatus("libStatus","bad","請輸入模板名稱");
+  const category=$("libCategory").value.trim() || "未分類";
+  const cfg=exportCurrentConfig();
+  const meta=getLibMeta();
+  meta[name]={ config: cfg, pdfKey: LIB_PDF_PREFIX+name, category, updatedAt: new Date().toISOString() };
+  setLibMeta(meta);
+  await idbSet(LIB_PDF_PREFIX+name, templateBytes.buffer);
+  showStatus("libStatus","ok",`已存入模板庫：${escapeHtml(name)}（${escapeHtml(category)}）`);
+  await renderLibrary();
+}
+async function libApply(name){
+  const meta=getLibMeta();
+  const item=meta[name];
+  if(!item) return showStatus("libStatus","bad","找不到此模板");
+  const buf=await idbGet(item.pdfKey);
+  if(!buf) return showStatus("libStatus","bad","找不到此模板 PDF（IndexedDB）");
+  templateBytes=new Uint8Array(buf);
+  templateName=name+".pdf";
+  await onTemplateLoaded();
+  await applyConfigToCurrentTemplate(item.config||{});
+  showStatus("libStatus","ok",`已套用：${escapeHtml(name)}（切換 PDF+設定）`);
+  showTab("preview");
+  await renderPreview();
+}
+async function libOverwrite(name){
+  if(!name) return showStatus("libStatus","bad","請先選擇一個模板（用卡片按覆蓋）");
+  $("libName").value=name;
+  await libSave();
+  showStatus("libStatus","ok",`已覆蓋：${escapeHtml(name)}`);
+}
+async function libDelete(name){
+  const meta=getLibMeta();
+  const item=meta[name];
+  if(!item) return;
+  delete meta[name];
+  setLibMeta(meta);
+  await idbDel(item.pdfKey);
+  showStatus("libStatus","ok",`已刪除：${escapeHtml(name)}`);
+  await renderLibrary();
+}
+$("btnLibSave")?.addEventListener("click", libSave);
+
+/* =========================
+  Export PDF (multi-page + image + allPages)
+========================= */
+async function renderOne(record){
+  const pdfDoc=await PDFDocument.load(templateBytes);
+  const pages=pdfDoc.getPages();
+  const page0=pages[0];
+
+  let font;
+  if(customFontBytes){
+    pdfDoc.registerFontkit(fontkit);
+    font=await pdfDoc.embedFont(customFontBytes,{subset:true});
+  }else{
+    font=await pdfDoc.embedFont(StandardFonts.Helvetica);
+  }
+
+  const prof=getActiveProfile();
+  const baseEnabled=prof?.baseEnabled || {awb:true,asn:true,ra:true,dt:true};
+  const base=readBasePos();
+
+  // base fields on page1
+  if(baseEnabled.awb && record.awbNo) page0.drawText(record.awbNo,{x:base.awb.x,y:base.awb.y,size:base.awb.s,font,color:rgb(0,0,0)});
+  if(baseEnabled.asn && record.assignorName) page0.drawText(record.assignorName,{x:base.asn.x,y:base.asn.y,size:base.asn.s,font,color:rgb(0,0,0)});
+  if(baseEnabled.ra && record.raCode) page0.drawText(record.raCode,{x:base.ra.x,y:base.ra.y,size:base.ra.s,font,color:rgb(0,0,0)});
+  if(baseEnabled.dt && record.docDate) page0.drawText(formatDate(record.docDate),{x:base.dt.x,y:base.dt.y,size:base.dt.s,font,color:rgb(0,0,0)});
+
+  const lhPdf=prof?.lineHeightPdf ?? 1.2;
+  const fields=prof?.fields||[];
+  const common={assignorName:record.assignorName, raCode:record.raCode, docDate:record.docDate};
+
+  for(const f of fields){
+    if(f.enabled===false) continue;
+
+    const g=(f.group||"body");
+    const isGlobal = f.allPages || g==="header" || g==="footer";
+    const targets = isGlobal ? pages : [ pages[(Number(f.page||1)-1)] || page0 ];
+
+    if(f.source==="image" && f.imageData){
+      for(const target of targets){
+        if((f.bgMode||"transparent")==="solid"){
+          const {r,g,b}=hexToRgb01(f.bgColor||"#ffffff");
+          target.drawRectangle({
+            x:Number(f.x||0), y:Number(f.y||0),
+            width:Number(f.width||100), height:Number(f.height||100),
+            color: rgb(r,g,b), opacity: 1
+          });
+        }
+        const {bytes, meta}=dataUrlToUint8Array(f.imageData);
+        let img;
+        if(meta.includes("image/jpeg") || meta.includes("image/jpg")) img=await pdfDoc.embedJpg(bytes);
+        else img=await pdfDoc.embedPng(bytes);
+
+        target.drawImage(img,{
+          x:Number(f.x||0), y:Number(f.y||0),
+          width:Number(f.width||100), height:Number(f.height||100),
+          opacity: Number.isFinite(f.opacity)?f.opacity:1
+        });
+      }
+      continue;
+    }
+
+    const val=resolveFieldValue(f, record, common);
+    if(!val) continue;
+    const lines=String(val).split(/\r?\n/);
+
+    for(const target of targets){
+      for(let i=0;i<lines.length;i++){
+        const line=lines[i];
+        if(!line) continue;
+        target.drawText(line,{
+          x:Number(f.x||0),
+          y:Number(f.y||0) - (i*Number(f.size||10)*lhPdf),
+          size:Number(f.size||10),
+          font,
+          color:rgb(0,0,0)
+        });
+      }
+    }
+  }
+
+  return await pdfDoc.save();
+}
+
+function setProgress(cur,total){
+  const pct=total?Math.round((cur/total)*100):0;
+  $("progressBar").style.width=pct+"%";
+  $("progressNum").textContent=`${cur}/${total}`;
+  $("progressText").textContent=total?`處理中… ${pct}%`:"尚未開始";
+}
+let cancelFlag=false;
+
+async function generateZip(){
+  if(!templateBytes) return showStatus("exportStatus","bad","請先載入範本或套用模板庫");
+  const rows=await analyzeData();
+  if(!rows.length) return showStatus("exportStatus","bad","無資料");
+
+  const commonAssignor=$("assignorName").value.trim();
+  const commonRA=normalizeRa($("raCode").value);
+  const commonDate=$("docDate").value;
+  if(!commonAssignor || !commonRA) return showStatus("exportStatus","bad","共用 Company/RA 不能空白");
+
+  cancelFlag=false;
+  $("btnCancel").disabled=false;
+  setProgress(0, rows.length);
+
+  const zip=new JSZip();
+  const tag=(getActiveProfile()?.tag||"UTK").trim()||"UTK";
+  let ok=0, fail=0;
+
+  try{
+    for(let i=0;i<rows.length;i++){
+      if(cancelFlag) break;
+      const r=rows[i];
+      const record={
+        awbNo: normalizeAwb(r.awbNo),
+        assignorName: r.assignorName || commonAssignor,
+        raCode: normalizeRa(r.raCode) || commonRA,
+        docDate: r.docDate || commonDate,
+        _src: r._src || {}
+      };
+      try{
+        const bytes=await renderOne(record);
+        zip.file(`${sanitizeFilename(record.awbNo)}##${sanitizeFilename(tag)}.pdf`, bytes, {binary:true});
+        ok++;
+      }catch(e){ console.error(e); fail++; }
+      setProgress(i+1, rows.length);
+      if((i+1)%10===0) await new Promise(res=>setTimeout(res,0));
+    }
+    if(cancelFlag) return showStatus("exportStatus","ok",`已取消：完成 ${ok} 份（失敗 ${fail}）`);
+    if(ok===0) return showStatus("exportStatus","bad","全部失敗：請檢查模板/座標/字型");
+
+    const blob=await zip.generateAsync({type:"blob"});
+    const baseName=$("zipName").value.trim()||`UTK_batch_${new Date().toISOString().split("T")[0]}`;
+    downloadBlob(blob, `${sanitizeFilename(baseName)}.zip`);
+    showStatus("exportStatus","ok",`完成：成功 ${ok} / 失敗 ${fail}`);
+  } finally {
+    $("btnCancel").disabled=true;
+  }
+}
+async function sampleOne(){
+  if(!templateBytes) return showStatus("exportStatus","bad","請先載入範本");
+  const rows=await analyzeData();
+  if(!rows.length) return showStatus("exportStatus","bad","無資料");
+
+  const r=rows[0];
+  const commonAssignor=$("assignorName").value.trim();
+  const commonRA=normalizeRa($("raCode").value);
+  const commonDate=$("docDate").value;
+
+  const record={
+    awbNo: normalizeAwb(r.awbNo),
+    assignorName: r.assignorName || commonAssignor,
+    raCode: normalizeRa(r.raCode) || commonRA,
+    docDate: r.docDate || commonDate,
+    _src: r._src || {}
+  };
+  const bytes=await renderOne(record);
+  const tag=(getActiveProfile()?.tag||"UTK").trim()||"UTK";
+  downloadBlob(new Blob([bytes],{type:"application/pdf"}), `${sanitizeFilename(record.awbNo)}##${sanitizeFilename(tag)}.pdf`);
+}
+$("btnGenerateZip").addEventListener("click", ()=>{ showTab("export"); generateZip(); });
+$("btnSampleOne").addEventListener("click", ()=>{ showTab("export"); sampleOne(); });
+$("btnCancel").addEventListener("click", ()=>{ cancelFlag=true; $("btnCancel").disabled=true; showStatus("exportStatus","ok","收到取消指令"); });
+
+/* =========================
+  Preview open
+========================= */
+$("btnOpenPreview").addEventListener("click", async ()=>{
+  showTab("preview");
+  if(!templateBytes) return showStatus("previewStatus","bad","請先載入範本或套用模板庫");
+  await analyzeData();
+  await renderPreview();
+});
+
+/* =========================
+  Init + cache restore
+========================= */
+async function tryAutoLoadCaches(){
+  const tplBuf=await idbGet(CACHE_TPL_BYTES);
+  const tplName=await idbGet(CACHE_TPL_NAME);
+  if(tplBuf){
+    templateBytes=new Uint8Array(tplBuf);
+    templateName=tplName||"template.pdf";
+    await onTemplateLoaded();
+  }
+  const fontBuf=await idbGet(CACHE_FONT_BYTES);
+  if(fontBuf){
+    customFontBytes=new Uint8Array(fontBuf);
+    showStatus("fontStatus","ok","已從快取載入字型");
+  }
+}
+window.addEventListener("load", async ()=>{
+  $("docDate").value=new Date().toISOString().split("T")[0];
+  refreshGroupSelect();
+  const lastTab=localStorage.getItem("utk_last_tab")||"import";
+  showTab(lastTab);
+  await tryAutoLoadCaches();
+  await renderLibrary();
+  showStatus("runStatus","ok","已就緒：匯入 →（模板庫/欄位/預覽）→ 匯出");
+});
+</script>
+</body>
+</html>
+``
