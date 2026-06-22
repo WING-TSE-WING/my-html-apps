@@ -1,0 +1,807 @@
+<!doctype html>
+<html lang="zh-HK">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>EzyCargo 工具 Pro（智能免副檔名＋批量搜尋版）</title>
+<style>
+  :root{
+    --bg:#f4f6f9; --card:#fff; --text:#0f172a; --muted:#64748b;
+    --primary:#1976d2; --primary2:#115aa5;
+    --green:#1b5e20; --amber:#b26a00; --red:#c62828;
+    --line:#e5e7eb; --shadow:0 2px 10px rgba(0,0,0,.08); --radius:14px;
+  }
+  *{ box-sizing:border-box; }
+  body{ font-family:"Segoe UI", Arial, sans-serif; margin:20px; background:var(--bg); color:var(--text); }
+  .container{ max-width: 1280px; margin:auto; }
+  h1{ font-size:18px; margin:0 0 6px 0; }
+  .sub{ font-size:12px; color:var(--muted); line-height:1.55; margin:0; }
+  .card{ background:var(--card); border-radius:var(--radius); box-shadow:var(--shadow); padding:14px; margin-bottom:12px; }
+  .row{ display:flex; gap:10px; align-items:center; flex-wrap:wrap; }
+  .spacer{ flex:1; }
+  .btn{ border:0; border-radius:10px; padding:8px 12px; background:var(--primary); color:#fff; cursor:pointer; font-size:13px; border: 1px solid transparent; }
+  .btn:hover{ background:var(--primary2); }
+  .btn.secondary{ background:#6b7280; color:#fff; }
+  .btn.secondary:hover{ background:#4b5563; }
+  .btn.success{ background:#2e7d32; color:#fff; }
+  .btn.success:hover{ background:#1f5a23; }
+  .btn.ghost{ background:#eef2ff; color:#1e3a8a; }
+  .btn.ghost:hover{ background:#e0e7ff; }
+  .btn.pill{ padding:6px 10px; border-radius: 999px; }
+  .seg{ display:flex; gap:8px; align-items:center; flex-wrap:wrap; }
+  .seg .btn{ background:#eef2ff; color:#1e3a8a; }
+  .seg .btn.active{ background:var(--primary); color:#fff; }
+  .kpi{ display:flex; gap:10px; flex-wrap:wrap; }
+  .kpi .box{ border:1px solid var(--line); border-radius:12px; padding:10px 12px; min-width: 140px; background:#fff; }
+  .kpi .label{ font-size:12px; color:var(--muted); }
+  .kpi .value{ font-size:18px; font-weight:800; margin-top:4px; }
+  .kpi .ok{ color:var(--green); } .kpi .partial{ color:var(--amber); } .kpi .fail{ color:var(--red); }
+  .input{ border:1px solid var(--line); border-radius:12px; padding:8px 10px; font-size:13px; min-width: 320px; background:#fff; }
+  .hint{ font-size:12px; color:var(--muted); line-height:1.55; margin-top:6px; }
+  .tableWrap{ padding:0; overflow:hidden; }
+  table{ width:100%; border-collapse:collapse; background:#fff; }
+  th, td{ padding:10px; border-bottom:1px solid var(--line); vertical-align:top; font-size:13px; }
+  th{ background:var(--primary); color:#fff; text-align:left; position:sticky; top:0; z-index:2; font-weight:700; }
+  tr:hover{ background:#f0f7ff; }
+  td a{ word-break: break-all; color:var(--primary); text-decoration:none; }
+  td a:hover{ text-decoration:underline; }
+  .badge{ display:inline-flex; align-items:center; gap:6px; padding:3px 10px; border-radius:999px; font-size:12px; font-weight:700; border:1px solid transparent; }
+  .badge.ok{ background:#dcfce7; color:#14532d; border-color:#bbf7d0; }
+  .badge.partial{ background:#ffedd5; color:#9a3412; border-color:#fed7aa; }
+  .badge.fail{ background:#fee2e2; color:#991b1b; border-color:#fecaca; }
+  tr.failRow{ background:#fff1f2; } tr.partialRow{ background:#fffbeb; }
+  tr.failRow:hover{ background:#ffe4e6; } tr.partialRow:hover{ background:#fef3c7; }
+  .op{ white-space:nowrap; display: flex; gap: 4px; }
+  .small{ font-size:12px; color:var(--muted); }
+  .split{ display:grid; grid-template-columns: 1fr 1fr; gap:12px; margin-top: 12px; }
+  @media (max-width: 980px){ .split{ grid-template-columns:1fr; } }
+  ul{ margin:8px 0 0 18px; padding: 0; }
+  li{ margin:4px 0; word-break:break-all; font-size:13px; }
+  .toast{ position:fixed; right:16px; bottom:16px; background:#0f172a; color:#fff; padding:10px 12px; border-radius:12px;
+          box-shadow:0 10px 30px rgba(0,0,0,.25); display:none; max-width: 360px; font-size:13px; line-height:1.4; z-index:9998; }
+  .toast.show{ display:block; animation:pop .15s ease-out; }
+  @keyframes pop{ from{ transform:translateY(6px); opacity:.5; } to{ transform:translateY(0); opacity:1; } }
+  .dbgTab{ border:1px solid #cbd5e1; background:#fff; color:#0f172a; padding:6px 10px; border-radius999px; border-radius: 999px; cursor:pointer; font-size:12px; }
+  .dbgTab.active{ background:#1976d2; color:#fff; border-color:#1976d2; }
+</style>
+</head>
+
+<body>
+<div class="container">
+
+  <div class="card">
+    <div class="row">
+      <div>
+        <h1>📦 EzyCargo 工具 Pro (智能免副檔名＋多單號批量搜尋版)</h1>
+        <p class="sub">
+          <b>🚀 智能解讀：</b>支援直接丟入「無副檔名」檔案！系統自動分析 MIME 特徵流，省去手動改檔名地獄。
+        </p>
+        <p class="sub">
+          <b>🔍 批量過濾：</b>搜尋框支援使用「空格」、「逗號 ,」或「斜線 /」分隔，同時比對、撈出多個提單號碼。
+        </p>
+      </div>
+      <div class="spacer"></div>
+      <input type="file" multiple class="input" style="min-width:340px" onchange="handleFiles(this.files)">
+    </div>
+
+    <div class="row" style="margin-top:10px">
+      <div class="kpi">
+        <div class="box"><div class="label">✅ OK</div><div class="value ok" id="kOk">0</div></div>
+        <div class="box"><div class="label">⚠️ 不完整</div><div class="value partial" id="kPartial">0</div></div>
+        <div class="box"><div class="label">❌ 失敗</div><div class="value fail" id="kFail">0</div></div>
+        <div class="box"><div class="label">總筆數</div><div class="value" id="kTotal">0</div></div>
+      </div>
+
+      <div class="spacer"></div>
+
+      <!-- 增強型搜尋框提示 -->
+      <input id="q" class="input" placeholder="🔎 批量搜尋（可用空格、逗號分隔多個單號）" oninput="renderAll()">
+
+      <div class="seg">
+        <span class="small"><b>🔘 顯示：</b></span>
+        <button class="btn pill active" id="fAll" onclick="setFilter('all')">全部</button>
+        <button class="btn pill" id="fErr" onclick="setFilter('error')">只看錯</button>
+        <button class="btn pill" id="fOk" onclick="setFilter('ok')">只成功</button>
+      </div>
+    </div>
+
+    <div class="row" style="margin-top:10px">
+      <button class="btn" onclick="exportBlockXLS()">匯出 A：Block（Excel 純文字）</button>
+      <button class="btn" style="background:#0284c7;" onclick="exportMawbLinkXLS()">匯出 B：MAWB+Link（標準 CSV 隔開）</button>
+      <button class="btn" onclick="exportBlockWord()">匯出 C：Block（Word）</button>
+      <button class="btn success" onclick="copyAllBlocksRich()">Copy 全部 Block（含超連結）</button>
+      <!-- ✨ 新增：僅複製搜尋結果按鈕 -->
+      <button class="btn success" style="background:#047857;" onclick="copyFilteredBlocksRich()">Copy 搜尋結果 Block（含超連結）</button>
+
+      <div class="spacer"></div>
+
+      <button class="btn ghost" onclick="copyList('fail')">Copy 失敗清單</button>
+      <button class="btn ghost" onclick="copyList('partial')">Copy 不完整清單</button>
+      <button class="btn secondary" onclick="clearAll()">清空</button>
+    </div>
+
+    <div class="hint" id="status"></div>
+  </div>
+
+  <div class="card tableWrap">
+    <table>
+      <thead>
+        <tr>
+          <th style="width:24%">來源</th>
+          <th style="width:12%">MAWB</th>
+          <th>Link（完整顯示）</th>
+          <th style="width:10%">狀態</th>
+          <th style="width:22%">原因/提示</th>
+          <th style="width:12%">操作</th>
+        </tr>
+      </thead>
+      <tbody id="tb"></tbody>
+    </table>
+  </div>
+
+  <div class="split">
+    <div class="card" id="failBox" style="display:none">
+      <div class="row">
+        <div><b>❌ 完全失敗（沒有任何 Block）</b></div>
+        <div class="spacer"></div>
+        <span class="badge fail" id="failCount">0</span>
+      </div>
+      <div class="hint">點清單可直接開「查看/診斷」。</div>
+      <ul id="failList"></ul>
+    </div>
+
+    <div class="card" id="partialBox" style="display:none">
+      <div class="row">
+        <div><b>⚠️ 不完整（有 Block，但缺 MAWB 或 Link）</b></div>
+        <div class="spacer"></div>
+        <span class="badge partial" id="partialCount">0</span>
+      </div>
+      <div class="hint">點清單可直接開「查看/診斷」。</div>
+      <ul id="partialList"></ul>
+    </div>
+  </div>
+
+</div>
+
+<div class="toast" id="toast"></div>
+
+<!-- Debug Viewer Modal -->
+<div id="dbgMask" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,.6); z-index:9999;">
+  <div style="background:#fff; width:min(980px,92vw); height:min(78vh,760px); margin:6vh auto; border-radius:14px; overflow:hidden; box-shadow:0 20px 60px rgba(0,0,0,.35); display:flex; flex-direction:column;">
+    <div style="padding:12px 14px; background:#1976d2; color:#fff; display:flex; align-items:center; gap:10px;">
+      <div style="font-weight:800">🧪 智能 Debug 檢視</div>
+      <div id="dbgTitle" style="font-size:12px; opacity:.95; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;"></div>
+      <div style="flex:1"></div>
+      <button onclick="closeDbg()" style="border:0; background:rgba(255,255,255,.18); color:#fff; padding:6px 10px; border-radius:10px; cursor:pointer;">關閉</button>
+    </div>
+
+    <div style="padding:10px 14px; border-bottom:1px solid #e5e7eb; display:flex; gap:8px; flex-wrap:wrap; align-items:center;">
+      <span id="dbgBadge" style="font-size:12px; font-weight:800;"></span>
+      <span id="dbgHints" style="font-size:12px; color:#475569;"></span>
+      <div style="flex:1"></div>
+      <button onclick="copyDbgReport()" style="border:0; background:#eef2ff; color:#1e3a8a; padding:6px 10px; border-radius:999px; cursor:pointer;">Copy Debug 報告</button>
+    </div>
+
+    <div style="padding:10px 14px; display:flex; gap:8px; flex-wrap:wrap;">
+      <button class="dbgTab active" id="tabTips" onclick="setDbgTab('tips')">診斷建議</button>
+      <button class="dbgTab" id="tabMain" onclick="setDbgTab('main')">最新內容（已去回覆鏈）</button>
+      <button class="dbgTab" id="tabFull" onclick="setDbgTab('full')">清洗後全文</button>
+      <button class="dbgTab" id="tabRaw" onclick="setDbgTab('raw')">原始片段（截取）</button>
+    </div>
+
+    <div style="padding:14px; overflow:auto; flex:1; background: #fafafa;">
+      <div id="dbgPaneTips" style="font-size:13px; line-height:1.6; color:#1e293b;"></div>
+      <pre id="dbgPaneMain" style="display:none; white-space:pre-wrap; word-break:break-word; font-family:ui-monospace, Menlo, Consolas, monospace; font-size:12px; line-height:1.45; background:#0b1220; color:#e5e7eb; padding:12px; border-radius:12px;"></pre>
+      <pre id="dbgPaneFull" style="display:none; white-space:pre-wrap; word-break:break-word; font-family:ui-monospace, Menlo, Consolas, monospace; font-size:12px; line-height:1.45; background:#111827; color:#e5e7eb; padding:12px; border-radius:12px;"></pre>
+      <pre id="dbgPaneRaw" style="display:none; white-space:pre-wrap; word-break:break-word; font-family:ui-monospace, Menlo, Consolas, monospace; font-size:12px; line-height:1.45; background:#0f172a; color:#e5e7eb; padding:12px; border-radius:12px;"></pre>
+    </div>
+  </div>
+</div>
+
+<script>
+/* =============== state =============== */
+const items = [];                    
+let failedEntries = [];             
+let partialEntries = [];            
+let currentFilter = 'all';
+let dbgCurrent = null;
+
+const tb = document.getElementById('tb');
+const status = document.getElementById('status');
+const kOk = document.getElementById('kOk');
+const kPartial = document.getElementById('kPartial');
+const kFail = document.getElementById('kFail');
+const kTotal = document.getElementById('kTotal');
+
+function toast(msg){
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  clearTimeout(window.__toastTimer);
+  window.__toastTimer = setTimeout(()=>t.classList.remove('show'), 2200);
+}
+
+/* =============== basic utils =============== */
+function escapeHtml(s){
+  return String(s ?? '')
+    .replaceAll('&','&amp;').replaceAll('<','&lt;').replaceAll('>','&gt;')
+    .replaceAll('"','&quot;').replaceAll("'","&#39;");
+}
+function escapeAttr(s){ return escapeHtml(s); }
+
+function decodeEntities(s){
+  let t = String(s || '');
+  while (t.includes('&amp;')) t = t.replaceAll('&amp;', '&');
+  return t.replaceAll('&lt;', '<').replaceAll('&gt;', '>')
+          .replaceAll('&quot;', '"').replaceAll('&apos;', "'");
+}
+function normalizeLink(link){
+  let s = String(link || '');
+  while (s.includes('&amp;')) s = s.replaceAll('&amp;', '&');
+  return s.trim();
+}
+
+/* =============== quoted-printable + html cleanup =============== */
+function decodeQuotedPrintable(input){
+  let s = String(input || '');
+  s = s.replace(/=\r?\n/g, ''); 
+  s = s.replace(/=([0-9A-Fa-f]{2})/g, (_,h)=>String.fromCharCode(parseInt(h,16)));
+  return s;
+}
+function atobUtf8(b64){
+  const bin = atob(String(b64 || '').replace(/\s+/g,''));
+  const bytes = Uint8Array.from(bin, c => c.charCodeAt(0));
+  return new TextDecoder('utf-8').decode(bytes);
+}
+function htmlToText(html){
+  const s = String(html || '');
+  return s
+    .replace(/<\/p>/gi, '\n').replace(/<br\s*\/?>/gi, '\n')
+    .replace(/<\/div>/gi, '\n').replace(/<\/tr>/gi, '\n')
+    .replace(/<\/td>/gi, ' ')
+    .replace(/<[^>]+>/g, '')
+    .replace(/\n{3,}/g, '\n\n')
+    .trim();
+}
+function normalizeAnyText(raw){
+  let t = String(raw || '');
+  if (/=\r?\n/.test(t) || /=3D/i.test(t) || /Content-Transfer-Encoding:\s*quoted-printable/i.test(t)){
+    t = decodeQuotedPrintable(t);
+  }
+  if (/<\/?(p|br|div|table|tr|td)\b/i.test(t)){
+    t = htmlToText(t);
+  }
+  t = decodeEntities(t);
+  t = t.replace(/\r/g,'').replace(/\n{3,}/g, '\n\n').trim();
+  return t;
+}
+
+/* =============== reply chain markers =============== */
+const REPLY_MARKERS = [
+  /(^|\n)\s*-{5,}\s*Original Message\s*-{0,}\s*($|\n)/i,
+  /(^|\n)\s*-{5,}\s*Forwarded message\s*-{0,}\s*($|\n)/i,
+  /(^|\n)\s*Begin forwarded message\s*:\s*($|\n)/i,
+  /(^|\n)\s*On\s+.+\s+wrote:\s*($|\n)/i,                                 
+  /(^|\n)\s*From:\s*.+\n\s*Sent:\s*.+\n\s*To:\s*.+\n\s*Subject:\s*.+/i,     
+  /(^|\n)\s*From:\s*.+\n\s*Date:\s*.+\n\s*To:\s*.+\n\s*Subject:\s*.+/i,
+  /(^|\n)\s*发件人[:：]\s*.+/i,
+  /(^|\n)\s*日\s*期[:：]\s*.+/i,
+  /(^|\n)\s*收件人[:：]\s*.+/i,
+  /(^|\n)\s*主\s*题[:：]\s*.+/i,
+  /(^|\n)\s*抄\s*送[:：]\s*.+/i,
+  /(^|\n)\s*-{20,}\s*($|\n)/,        
+  /(^|\n)\s*_{20,}\s*($|\n)/         
+];
+
+function splitReplyChain(cleanedText){
+  const t = String(cleanedText || '');
+  let bestIdx = -1;
+  let bestMatch = '';
+
+  for (const re of REPLY_MARKERS){
+    const m = re.exec(t);
+    if (m && (bestIdx === -1 || m.index < bestIdx)){
+      bestIdx = m.index;
+      bestMatch = (m[0] || '').trim().slice(0, 120);
+    }
+  }
+
+  if (bestIdx === -1){
+    return { main: t, tail: '', detected:false, marker:'', idx:-1 };
+  }
+  const main = t.slice(0, bestIdx).trim();
+  const tail = t.slice(bestIdx).trim();
+  return { main, tail, detected:true, marker: bestMatch, idx: bestIdx };
+}
+
+/* =============== MIME extract =============== */
+function extractBodiesFromEml(raw){
+  const text = String(raw || '').replace(/\r/g,'');
+  const parts = [];
+  const lines = text.split('\n');
+  let cur = null;
+
+  function pushCur(){
+    if (!cur) return;
+    cur.body = (cur.buf || []).join('\n');
+    parts.push(cur);
+    cur = null;
+  }
+
+  for (let i=0;i<lines.length;i++){
+    const line = lines[i];
+    if (/^Content-Type:/i.test(line)){
+      const isPlain = /^Content-Type:\s*text\/plain/i.test(line);
+      const isHtml  = /^Content-Type:\s*text\/html/i.test(line);
+      if (isPlain || isHtml){
+        pushCur();
+        cur = { type: isPlain ? 'plain' : 'html', encoding:'', buf:[], collecting:false };
+        continue;
+      }
+    }
+    if (cur && /^Content-Transfer-Encoding:/i.test(line)){
+      cur.encoding = line.split(':').slice(1).join(':').trim().toLowerCase();
+      continue;
+    }
+    if (cur && !cur.collecting){
+      if (line.trim()===''){ cur.collecting = true; }
+      continue;
+    }
+    if (cur && cur.collecting){
+      if (/^--/.test(line)) { pushCur(); continue; }
+      cur.buf.push(line);
+    }
+  }
+  pushCur();
+  return parts;
+}
+function decodePartBody(part){
+  let body = String(part.body || '').trim();
+  if (!body) return '';
+  if (part.encoding === 'base64'){
+    const b64 = body.replace(/\s+/g,'');
+    try { return atobUtf8(b64); }
+    catch {
+      const safe = b64.replace(/[^A-Za-z0-9+/=]/g,'');
+      try { return atobUtf8(safe); } catch { return ''; }
+    }
+  }
+  if (part.encoding === 'quoted-printable'){
+    return decodeQuotedPrintable(body);
+  }
+  return body;
+}
+
+/* =============== blocks extractor =============== */
+function buildCanonicalLinkFromText(text){
+  const t = decodeEntities(text);
+  const p = (t.match(/\bAWBPrefix\s*=\s*([0-9]{3})\b/i) || [])[1] || '';
+  const n = (t.match(/\bAWBNum\s*=\s*([0-9]{8})\b/i) || [])[1] || '';
+  const k = (t.match(/\bAccessKey\s*=\s*([A-Za-z0-9]+)\b/i) || [])[1] || '';
+  const c = (t.match(/\bPromoCity\s*=\s*([A-Za-z]{3})\b/i) || [])[1] || 'HKG';
+  if (p && n && k) {
+    return `https://www.ezycargo.com/ezycargo/usrapps/Login/AnonymousLogin.aspx?AWBPrefix=${p}&AWBNum=${n}&AccessKey=${k}&PromoCity=${c}`;
+  }
+  return '';
+}
+function extractAllBlocks(text){
+  const src = decodeEntities(String(text||'').replace(/\r/g,''));
+  const lines = src.split('\n');
+  const blocks = [];
+  let buf = null;
+
+  function flush(){
+    if (!buf) return;
+    const raw = buf.join('\n').trim();
+    if (raw) blocks.push(raw);
+    buf = null;
+  }
+
+  for (let i=0;i<lines.length;i++){
+    const t = lines[i].trim();
+    if (!t) continue;
+    if (/Air\s+Waybill\s+Co-loaded\s+by/i.test(t)){
+      flush(); buf = [t]; continue;
+    }
+    if (!buf) continue;
+    if (/Important\s+Notice/i.test(t)){ flush(); continue; }
+    if (/Air\s+Waybill\s+Co-loaded\s+by/i.test(t)){ flush(); buf=[t]; continue; }
+    buf.push(t);
+  }
+  flush();
+
+  return blocks.map(b=>{
+    const c = normalizeLink(buildCanonicalLinkFromText(b)) || '';
+    if (!c) return b;
+    const lines2 = b.split('\n');
+    let replaced = false;
+    for (let j=lines2.length-1;j>=0;j--){
+      if (/AnonymousLogin\.aspx/i.test(lines2[j])){
+        lines2[j] = c; replaced = true; break;
+      }
+    }
+    return replaced ? lines2.join('\n') : (b + '\n' + c);
+  }).filter(isValidBlock);
+}
+function isValidBlock(block){
+  if (!/Air\s*Waybill\s*No\.\s*:\s*[0-9]{3}-[0-9]{8}/i.test(block)) return false;
+  if (!/Activation\s*Key/i.test(block)) return false;
+  return /AnonymousLogin\.aspx/i.test(block) || (/\bAWBPrefix\s*=\s*[0-9]{3}\b/i.test(block) && /\bAWBNum\s*=\s*[0-9]{8}\b/i.test(block));
+}
+function extractMawbFromBlock(block){
+  const m = String(block||'').match(/Air\s*Waybill\s*No\.\s*:\s*([0-9]{3}-[0-9]{8})/i);
+  return m ? m[1] : '';
+}
+function extractLinkFromBlock(block){
+  const m = String(block||'').match(/https?:\/\/\S*AnonymousLogin\.aspx\?\S+/i);
+  if (m) return normalizeLink(m[0]);
+  return normalizeLink(buildCanonicalLinkFromText(block));
+}
+function classifyResult(block, mawb, link){
+  if (!block) return { status:'fail', reason:'找不到區塊' };
+  const miss = [];
+  if (!mawb) miss.push('缺 MAWB');
+  if (!link) miss.push('缺 Link');
+  if (miss.length) return { status:'partial', reason: miss.join('、') };
+  return { status:'ok', reason:'—' };
+}
+
+/* =============== CSV parser =============== */
+function parseCSV(text) {
+  text = String(text || '').replace(/\r/g, '');
+  const rows = []; let row = []; let field = ''; let i = 0; let inQuotes = false;
+  while (i < text.length) {
+    const ch = text[i];
+    if (inQuotes) {
+      if (ch === '"') {
+        if (text[i + 1] === '"') { field += '"'; i += 2; continue; }
+        inQuotes = false; i++; continue;
+      } else { field += ch; i++; continue; }
+    } else {
+      if (ch === '"') { inQuotes = true; i++; continue; }
+      if (ch === ',') { row.push(field); field = ''; i++; continue; }
+      if (ch === '\n') { row.push(field); rows.push(row); row = []; field = ''; i++; continue; }
+      field += ch; i++; continue;
+    }
+  }
+  if (field || row.length) { row.push(field); rows.push(row); }
+  return rows;
+}
+
+/* =============== 智能分流與無副檔名偵測功能 =============== */
+function handleFiles(files){
+  if (!files || !files.length) return;
+  toast(`已選擇 ${files.length} 個檔案，開始智能識別…`);
+  
+  for (const f of files){
+    const lower = (f.name || '').toLowerCase();
+    if (lower.endsWith('.csv')) {
+      handleCsvFile(f);
+    } else if (lower.endsWith('.eml') || lower.endsWith('.msg')) {
+      handleEmlFile(f);
+    } else {
+      sniffUnknownFile(f); 
+    }
+  }
+}
+
+function sniffUnknownFile(file) {
+  const reader = new FileReader();
+  const chunk = file.slice(0, 1200); 
+  reader.onload = e => {
+    const head = String(e.target.result || '').trim();
+    const isEmlHeader = /^(from|received|date|subject|mime-version|to|return-path|delivered-to):/i.test(head)
+                        || head.includes('Content-Type:') 
+                        || head.includes('Message-ID:');
+    if (isEmlHeader) {
+      toast(`🔍 [${file.name}] 自動識別為 EML 格式解析`);
+      handleEmlFile(file);
+    } else {
+      handleCsvFile(file);
+    }
+  };
+  reader.readAsText(chunk);
+}
+
+function handleEmlFile(file){
+  const reader = new FileReader();
+  reader.onload = e => {
+    const raw = String(e.target.result || '');
+    const rawSliceForDbg = raw.slice(0, 50000);
+    const parts = extractBodiesFromEml(raw);
+    const decodedBodies = parts.map(p=>{
+      const d = decodePartBody(p);
+      return { type:p.type, text: normalizeAnyText(d) };
+    });
+
+    let cleanedFull = ''; let bestScore = -1;
+    decodedBodies.forEach(b=>{
+      let sc = 0;
+      if (/Air\s+Waybill\s+Co-loaded\s+by/i.test(b.text)) sc += 5;
+      if (/AnonymousLogin\.aspx/i.test(b.text)) sc += 3;
+      if (sc > bestScore){ bestScore = sc; cleanedFull = b.text; }
+    });
+    if (!cleanedFull || bestScore < 2) cleanedFull = normalizeAnyText(raw);
+
+    const split = splitReplyChain(cleanedFull);
+    const cleanedMain = split.main || cleanedFull;
+    const blocks = extractAllBlocks(cleanedMain);
+
+    if (!blocks.length){
+      const id = pushItem({
+        file:file.name, mawb:'', link:'', block:'', status:'fail',
+        reason: split.detected ? `未抽到區塊 (已切離回覆鏈: ${split.marker})` : '未抽到區塊 (格式不符)',
+        _cleanedFull: cleanedFull, _cleanedMain: cleanedMain, _replyDetected: split.detected, _replyMarker: split.marker, _replyIgnoredLen: split.tail.length, _rawSlice: rawSliceForDbg
+      });
+      failedEntries.push({ name: file.name, id });
+      renderAll(); return;
+    }
+
+    blocks.forEach((block, idx)=>{
+      const mawb = extractMawbFromBlock(block);
+      const link = extractLinkFromBlock(block);
+      const cls = classifyResult(block, mawb, link);
+      const name = blocks.length>1 ? `${file.name}#${idx+1}` : file.name;
+      const id = pushItem({
+        file:name, mawb, link, block, status:cls.status, reason: cls.reason + (split.detected ? '（已忽略回覆鏈）' : ''),
+        _cleanedFull: cleanedFull, _cleanedMain: cleanedMain, _replyDetected: split.detected, _replyMarker: split.marker, _replyIgnoredLen: split.tail.length, _rawSlice: rawSliceForDbg
+      });
+      if (cls.status==='partial') partialEntries.push({ name, id });
+    });
+    renderAll();
+  };
+  reader.readAsText(file);
+}
+
+function handleCsvFile(file){
+  const reader = new FileReader();
+  reader.onload = e => {
+    const raw = String(e.target.result || '');
+    const rows = parseCSV(raw);
+    rows.forEach((cols, r) => {
+      if (cols.length === 0 || (cols.length === 1 && !cols[0].trim())) return;
+      const blobRaw = cols.join('\n');
+      const cleanedFull = normalizeAnyText(blobRaw);
+      const split = splitReplyChain(cleanedFull);
+      const cleanedMain = split.main || cleanedFull;
+      const baseName = `${file.name}#row${r+1}`;
+      const blocks = extractAllBlocks(cleanedMain);
+
+      if (!blocks.length){
+        if (/Waybill|Ezy|Cargo/i.test(blobRaw)) {
+          const id = pushItem({
+            file: baseName, mawb:'', link:'', block:'', status:'fail', reason: '該列未抽到有效區塊',
+            _cleanedFull: cleanedFull, _cleanedMain: cleanedMain, _replyDetected: split.detected, _replyMarker: split.marker, _replyIgnoredLen: split.tail.length, _rawSlice: blobRaw.slice(0, 1000)
+          });
+          failedEntries.push({ name: baseName, id });
+        }
+        return;
+      }
+      blocks.forEach((block, idx)=>{
+        const mawb = extractMawbFromBlock(block);
+        const link = extractLinkFromBlock(block);
+        const cls = classifyResult(block, mawb, link);
+        const name = blocks.length>1 ? `${baseName}#${idx+1}` : baseName;
+        const id = pushItem({
+          file:name, mawb, link, block, status:cls.status, reason: cls.reason,
+          _cleanedFull: cleanedFull, _cleanedMain: cleanedMain, _replyDetected: split.detected, _replyMarker: split.marker, _replyIgnoredLen: split.tail.length, _rawSlice: blobRaw.slice(0, 2000)
+        });
+        if (cls.status==='partial') partialEntries.push({ name, id });
+      });
+    });
+    renderAll();
+  };
+  reader.readAsText(file);
+}
+
+/* =============== UI 運算與多欄位批量搜尋核心 =============== */
+function pushItem(it){
+  it._id = `${Date.now()}_${Math.random().toString(16).slice(2)}`;
+  items.push(it); return it._id;
+}
+function findById(id){ return items.find(x=>x._id===id); }
+
+function setFilter(mode){
+  currentFilter = mode;
+  document.getElementById('fAll').classList.toggle('active', mode==='all');
+  document.getElementById('fErr').classList.toggle('active', mode==='error');
+  document.getElementById('fOk').classList.toggle('active', mode==='ok');
+  renderAll();
+}
+
+function matchQuery(it){
+  const q = (document.getElementById('q').value || '').trim().toLowerCase();
+  if (!q) return true;
+  
+  const keywords = q.split(/[\s,，／\/]+/).filter(k => k.length > 0);
+  if (keywords.length === 0) return true;
+
+  const searchString = [it.file, it.mawb, it.link, it.reason].join(' ').toLowerCase();
+  return keywords.some(keyword => searchString.includes(keyword));
+}
+
+function matchFilter(it){
+  if (currentFilter === 'error') return it.status !== 'ok';
+  if (currentFilter === 'ok') return it.status === 'ok';
+  return true;
+}
+
+function rowHtml(it){
+  const link = normalizeLink(it.link || '');
+  const trClass = it.status==='fail' ? 'failRow' : (it.status==='partial' ? 'partialRow' : '');
+  const badge = it.status==='ok' ? `<span class="badge ok">✅ OK</span>` : (it.status==='partial' ? `<span class="badge partial">⚠️ PARTIAL</span>` : `<span class="badge fail">❌ FAIL</span>`);
+  return `
+    <tr class="${trClass}">
+      <td><b>${escapeHtml(it.file)}</b></td>
+      <td>${it.mawb ? `<code>${escapeHtml(it.mawb)}</code>` : '<span style="color:var(--red);font-weight:700;">未找到</span>'}</td>
+      <td>${link ? `<a href="${escapeAttr(link)}" target="_blank">${escapeHtml(link)}</a>` : '<span style="color:var(--red);font-weight:700;">未找到</span>'}</td>
+      <td>${badge}</td>
+      <td><small>${escapeHtml(it.reason || '')}</small></td>
+      <td class="op">
+        <button class="btn ghost" style="padding:4px 8px; font-size:12px;" onclick="openDbgById('${it._id}')">診斷</button>
+        ${it.block ? `<button class="btn success" style="padding:4px 8px; font-size:12px;" onclick="copyOneBlockRich('${it._id}')">Copy</button>` : ''}
+      </td>
+    </tr>
+  `;
+}
+
+function renderAll(){
+  items.sort((a,b)=> String(a.file||'').localeCompare(String(b.file||'')));
+  tb.innerHTML = '';
+  
+  const filtered = items.filter(it=>matchFilter(it) && matchQuery(it));
+  filtered.forEach(it=> tb.insertAdjacentHTML('beforeend', rowHtml(it)));
+
+  failedEntries = items.filter(x=>x.status==='fail');
+  partialEntries = items.filter(x=>x.status==='partial');
+
+  document.getElementById('failBox').style.display = failedEntries.length ? 'block' : 'none';
+  document.getElementById('failCount').textContent = failedEntries.length;
+  document.getElementById('failList').innerHTML = failedEntries.map(x=>`<li><a href="javascript:void(0)" onclick="openDbgById('${x._id}')">${escapeHtml(x.file)}</a></li>`).join('');
+
+  document.getElementById('partialBox').style.display = partialEntries.length ? 'block' : 'none';
+  document.getElementById('partialCount').textContent = partialEntries.length;
+  document.getElementById('partialList').innerHTML = partialEntries.map(x=>`<li><a href="javascript:void(0)" onclick="openDbgById('${x._id}')">${escapeHtml(x.file)}</a></li>`).join('');
+
+  const okLen = items.filter(x=>x.status==='ok').length;
+  kOk.textContent = okLen; kPartial.textContent = partialEntries.length; kFail.textContent = failedEntries.length; kTotal.textContent = items.length;
+  status.innerHTML = `📊 狀態快報：成功 <b>${okLen}</b> 筆 ｜ 不完整 <b>${partialEntries.length}</b> 筆 ｜ 失敗 <b>${failedEntries.length}</b> 筆`;
+}
+
+function clearAll(){ items.length = 0; renderAll(); toast('資料庫已清空'); }
+
+/* =============== 數據匯出與進階富文本複製功能 =============== */
+function linkifyHtmlFromText(text){
+  return escapeHtml(String(text || ''))
+    .replace(/(https?:\/\/[^\s<>"']+)/g, (m) => `<a href="${escapeAttr(normalizeLink(m))}">${escapeHtml(m)}</a>`)
+    .replace(/\n/g, '<br>');
+}
+
+async function copyOneBlockRich(id){
+  const it = findById(id); if (!it || !it.block) return;
+  const html = `<div style="font-family:Consolas,monospace;white-space:pre-wrap;background:#f8fafc;padding:12px;border:1px solid #e2e8f0;border-radius:8px;">${linkifyHtmlFromText(it.block)}</div>`;
+  try {
+    await navigator.clipboard.write([new ClipboardItem({ 'text/html': new Blob([html], { type: 'text/html' }), 'text/plain': new Blob([it.block], { type: 'text/plain' }) })]);
+    toast('📋 單一區塊複製成功（帶有超連結）');
+  } catch { navigator.clipboard.writeText(it.block); toast('📋 複製純文字區塊成功'); }
+}
+
+async function copyAllBlocksRich(){
+  const valid = items.filter(x=>x.block); if(!valid.length) return toast('無有效區塊');
+  const plainText = valid.map(x=>x.block).join('\n\n========================================\n\n');
+  const htmlChunks = valid.map(x=>`<div style="font-family:Arial;margin-bottom:24px;padding:10px;border-left:4px solid #1976d2;background:#f8fafc;">${linkifyHtmlFromText(x.block)}</div>`).join('');
+  try {
+    await navigator.clipboard.write([new ClipboardItem({ 'text/html': new Blob([htmlChunks], { type: 'text/html' }), 'text/plain': new Blob([plainText], { type: 'text/plain' }) })]);
+    toast(`🎉 已合併複製全部 ${valid.length} 個區塊`);
+  } catch { navigator.clipboard.writeText(plainText); toast('已降級複製純文字'); }
+}
+
+/* ✨ 新增：只複製目前被搜尋過濾出來的區塊內容（含超連結） */
+async function copyFilteredBlocksRich(){
+  // 同步畫面的過濾與搜尋邏輯，撈出當前符合的項目
+  const matchedItems = items.filter(it => matchFilter(it) && matchQuery(it) && it.block);
+  if (!matchedItems.length) return toast('🔍 當前搜尋結果中無有效區塊可複製');
+
+  const plainText = matchedItems.map(x => x.block).join('\n\n========================================\n\n');
+  const htmlChunks = matchedItems.map(x => `<div style="font-family:Arial;margin-bottom:24px;padding:10px;border-left:4px solid #047857;background:#f0fdf4;">${linkifyHtmlFromText(x.block)}</div>`).join('');
+  
+  try {
+    await navigator.clipboard.write([new ClipboardItem({ 
+      'text/html': new Blob([htmlChunks], { type: 'text/html' }), 
+      'text/plain': new Blob([plainText], { type: 'text/plain' }) 
+    })]);
+    toast(`🔍 已複製當前搜尋結果的 ${matchedItems.length} 個區塊（含連結）`);
+  } catch { 
+    navigator.clipboard.writeText(plainText); 
+    toast('已降級複製純文字結果'); 
+  }
+}
+
+function copyList(st) {
+  const target = items.filter(x=>x.status === st).map(x=>`${x.file}\t${x.reason}`).join('\n');
+  if(!target) return toast('無資料可複製');
+  navigator.clipboard.writeText(target); toast(`已複製清單`);
+}
+
+function triggerDownload(blob, filename) {
+  const url = URL.createObjectURL(blob); const a = document.createElement('a');
+  a.href = url; a.download = filename; document.body.appendChild(a); a.click();
+  document.body.removeChild(a); URL.revokeObjectURL(url);
+}
+
+function exportBlockXLS(){
+  const valid = items.filter(x=>x.block); if(!valid.length) return toast('無資料');
+  let content = "來源檔案/識別\t原始完整區塊內容\n";
+  valid.forEach(x=> content += `${x.file}\t"${x.block.replaceAll('"', '""')}"\n`);
+  triggerDownload(new Blob(["\uFEFF" + content], { type: 'text/excel;charset=utf-8;' }), `EzyCargo_Blocks_${Date.now()}.xls`);
+}
+
+function exportMawbLinkXLS(){
+  if (!items || !items.length) return toast('無資料可匯出');
+  
+  let csvContent = `"提單號","EzyCargo 連結"\n`;
+  items.forEach(x => {
+    const mawb = (x.mawb || '').trim().replaceAll('"', '""');
+    const link = (x.link || '').trim().replaceAll('"', '""');
+    csvContent += `"${mawb}","${link}"\n`; 
+  });
+  
+  const blob = new Blob(["\uFEFF" + csvContent], { type: 'text/csv;charset=utf-8;' });
+  triggerDownload(blob, `EzyCargo_MAWB_Link_${Date.now()}.csv`);
+}
+
+function exportBlockWord(){
+  const valid = items.filter(x=>x.block); if(!valid.length) return toast('無資料');
+  let html = `<html xmlns:o='urn:schemas-microsoft-com:office:office' xmlns:w='urn:schemas-microsoft-com:office:word' xmlns='http://www.w3.org/TR/REC-html40'><head><meta charset='utf-8'></head><body>`;
+  valid.forEach(x=> html += `<h3>📄 來源: ${escapeHtml(x.file)}</h3><div style="font-family:Courier New;background:#f4f6f9;padding:12px;border:1px solid #ccc;">${linkifyHtmlFromText(x.block)}</div><hr>`);
+  html += `</body></html>`;
+  triggerDownload(new Blob([html], { type: 'application/msword' }), `EzyCargo_Report_${Date.now()}.doc`);
+}
+
+/* =============== 智能 DEBUG 視窗邏輯 =============== */
+function openDbgById(id){
+  const it = findById(id); if (!it) return; dbgCurrent = it;
+  document.getElementById('dbgTitle').textContent = it.file;
+  document.getElementById('dbgBadge').className = `badge ${it.status}`;
+  document.getElementById('dbgBadge').textContent = it.status.toUpperCase();
+  
+  let h = `回覆鏈偵測: ${it._replyDetected ? '⚠️ 發現並清洗' : '✅ 乾淨原件'}`;
+  if(it._replyDetected) h += ` (匹配: "${escapeHtml(it._replyMarker)}")，隱藏了 ${it._replyIgnoredLen} 字元。`;
+  document.getElementById('dbgHints').innerHTML = h;
+
+  let tips = "<h4>🔍 系統深度診斷分析：</h4>";
+  if (it.status === 'ok') {
+    tips += `<p style="color:var(--green)"><b>🎉 解析成功！</b><br>已正確提取出 Co-loaded 區塊，單號與連結欄位分流完全正確。</p>`;
+  } else if (it.status === 'partial') {
+    tips += `<p style="color:var(--amber)"><b>⚠️ 欄位不完整提示：</b><br>已找到區塊，但資訊有缺失：<br>👉 異常狀態：<span class="badge fail">${escapeHtml(it.reason)}</span><br>請至【最新內容】分頁確認內容格式是否遭到特殊字元截換。</p>`;
+  } else {
+    tips += `<p style="color:var(--red)"><b>❌ 區塊提取失敗：</b><br>全文未偵測到 <code>Air Waybill Co-loaded by</code> 關鍵字結構。</p>`;
+  }
+  document.getElementById('dbgPaneTips').innerHTML = tips;
+  document.getElementById('dbgPaneMain').textContent = it._cleanedMain || '無內容';
+  document.getElementById('dbgPaneFull').textContent = it._cleanedFull || '無內容';
+  document.getElementById('dbgPaneRaw').textContent = it._rawSlice || '無內容';
+
+  setDbgTab('tips');
+  document.getElementById('dbgMask').style.display = 'block';
+}
+
+function closeDbg(){ document.getElementById('dbgMask').style.display = 'none'; }
+
+function setDbgTab(tab){
+  ['tips', 'main', 'full', 'raw'].forEach(t=>{
+    const btn = document.getElementById('tab' + t.charAt(0).toUpperCase() + t.slice(1));
+    const pane = document.getElementById('dbgPane' + t.charAt(0).toUpperCase() + t.slice(1));
+    if(t === tab) { btn.classList.add('active'); pane.style.display = 'block'; }
+    else { btn.classList.remove('active'); pane.style.display = 'none'; }
+  });
+}
+
+function copyDbgReport(){
+  if(!dbgCurrent) return;
+  const rep = `【EzyCargo 診斷報告】\n檔案: ${dbgCurrent.file}\n狀態: ${dbgCurrent.status.toUpperCase()}\n原因: ${dbgCurrent.reason}`;
+  navigator.clipboard.writeText(rep); toast('報告已複製');
+}
+</script>
+</body>
+</html>
