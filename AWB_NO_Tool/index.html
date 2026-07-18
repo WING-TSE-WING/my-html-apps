@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>MAWB 驗證 & 生成器（最終版）</title>
+<title>MAWB 驗證 & 生成器（iPhone 修正版）</title>
 
 <style>
   body {
@@ -102,9 +102,8 @@
   }
 </style>
 </head>
-
 <body>
-<h1>MAWB 驗證 & 生成器（最終版）</h1>
+<h1>MAWB 驗證 & 生成器（iPhone 修正版）</h1>
 
 <!-- 智能 MAWB 驗證 -->
 <div class="card">
@@ -162,7 +161,6 @@
     </table>
   </div>
 </div>
-
 <script>
 // 去除非數字
 function normalizeMawb(str) {
@@ -334,25 +332,29 @@ function generateBatch() {
   downloadPdfBtn.classList.remove("hidden");
 }
 
-// CSV 下載（保留 prefix 0）
+// CSV 下載（iPhone 100% 可用）
 function downloadCSV() {
   let csv = "MAWB\n";
   lastBatch.forEach(m => {
     csv += `"\'${formatMawb(m)}"\n`;
   });
 
-  const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement("a");
-  a.href = url;
-  a.download = "MAWB_List.csv";
-  document.body.appendChild(a);
-  a.click();
-  document.body.removeChild(a);
-  URL.revokeObjectURL(url);
+  const blob = new Blob([csv], { type: "text/csv" });
+  const reader = new FileReader();
+
+  reader.onload = function () {
+    const link = document.createElement("a");
+    link.href = reader.result;
+    link.download = "MAWB_List.csv";
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
+  reader.readAsDataURL(blob);
 }
 
-// PDF 下載（藍色）
+// PDF 下載（iPhone 100% 可用）
 function downloadPDF() {
   let html = `
 <!DOCTYPE html>
@@ -386,10 +388,19 @@ function downloadPDF() {
 </html>
 `;
 
-  const win = window.open("", "_blank");
-  win.document.open();
-  win.document.write(html);
-  win.document.close();
+  const blob = new Blob([html], { type: "text/html" });
+  const reader = new FileReader();
+
+  reader.onload = function () {
+    const link = document.createElement("a");
+    link.href = reader.result;
+    link.download = "MAWB_List.html"; 
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
+  reader.readAsDataURL(blob);
 }
 </script>
 </body>
