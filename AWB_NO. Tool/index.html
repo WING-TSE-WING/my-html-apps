@@ -1,0 +1,396 @@
+<!DOCTYPE html>
+<html lang="zh-HK">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MAWB 驗證 & 生成器（最終版）</title>
+
+<style>
+  body {
+    background: #000;
+    color: #f5d26b;
+    font-family: Consolas, "Segoe UI", system-ui;
+    margin: 0;
+    padding: 20px;
+  }
+  h1 {
+    color: #ffd700;
+    text-align: center;
+    margin-bottom: 6px;
+  }
+  h2 {
+    color: #f0c040;
+    margin-top: 0;
+    border-bottom: 1px solid #444;
+    padding-bottom: 4px;
+  }
+  .card {
+    border: 1px solid #444;
+    border-radius: 8px;
+    padding: 14px;
+    margin-bottom: 16px;
+    background: linear-gradient(135deg, #111, #1b1b1b);
+    box-shadow: 0 0 12px rgba(255, 215, 0, 0.15);
+  }
+  label {
+    display: block;
+    margin: 6px 0 3px;
+    font-weight: bold;
+  }
+  input, select, button, textarea {
+    padding: 6px 10px;
+    border-radius: 4px;
+    border: 1px solid #555;
+    background: #111;
+    color: #f5d26b;
+    font-family: inherit;
+  }
+  input:focus, select:focus, textarea:focus {
+    outline: 1px solid #ffd700;
+  }
+  button {
+    cursor: pointer;
+    background: #b8860b;
+    border-color: #ffd700;
+    margin-top: 8px;
+  }
+  button:hover {
+    background: #daa520;
+  }
+  .greenBtn {
+    background: #0f0;
+    color: #000;
+    font-weight: bold;
+    border-color: #7CFC00;
+    margin-left: 10px;
+  }
+  .blueBtn {
+    background: #007bff;
+    color: #fff;
+    font-weight: bold;
+    border-color: #66b2ff;
+    margin-left: 10px;
+  }
+  .status {
+    margin-top: 6px;
+    font-weight: bold;
+  }
+  .ok { color: #7CFC00; }
+  .bad { color: #ff6347; }
+
+  /* 手機 RWD */
+  @media (max-width: 600px) {
+    body { padding: 10px; font-size: 14px; }
+    h1 { font-size: 20px; }
+    h2 { font-size: 16px; }
+    input, select, button, textarea {
+      width: 100%;
+      margin-top: 6px;
+      font-size: 14px;
+    }
+    .greenBtn, .blueBtn {
+      width: 100%;
+      margin-left: 0;
+      margin-top: 10px;
+    }
+  }
+
+  /* 表格可滑動 */
+  .table-wrapper {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+</style>
+</head>
+
+<body>
+<h1>MAWB 驗證 & 生成器（最終版）</h1>
+
+<!-- 智能 MAWB 驗證 -->
+<div class="card">
+  <h2>智能 MAWB 驗證（單一 / 批量自動判斷）</h2>
+
+  <label>貼上 MAWB（1 個或大量都可以）</label>
+  <textarea id="smartInput" style="width:100%;height:200px;"></textarea>
+
+  <button onclick="smartCheck()">開始驗證</button>
+
+  <div id="smartSingleResult" class="status"></div>
+  <div id="smartBulkResult" class="status"></div>
+</div>
+
+<!-- 跳號生成 -->
+<div class="card">
+  <h2>跳號生成（+11 / +4）＋ 自動驗證</h2>
+
+  <label>MAWB 顯示格式</label>
+  <select id="formatSelect">
+    <option value="dash">055-38321010</option>
+    <option value="space">055-3832 1010</option>
+    <option value="plain">05538321010</option>
+  </select>
+
+  <label>起始 MAWB（由智能驗證自動套入）</label>
+  <input id="startMawb" type="text" placeholder="等待智能驗證正確後自動填入">
+
+  <label>生成數量</label>
+  <select id="count">
+    <option value="100">100</option>
+    <option value="200">200</option>
+    <option value="300">300</option>
+    <option value="400">400</option>
+    <option value="500">500</option>
+  </select>
+  <input id="countCustom" type="number" min="1" placeholder="自訂數量 (可留空)" style="margin-left:6px;width:120px;">
+
+  <button onclick="generateBatch()">生成 & 驗證</button>
+  <button class="greenBtn hidden" id="downloadBtn" onclick="downloadCSV()">下載 Excel (CSV)</button>
+  <button class="blueBtn hidden" id="downloadPdfBtn" onclick="downloadPDF()">下載 PDF</button>
+
+  <div id="batchStatus" class="status"></div>
+
+  <div class="table-wrapper hidden" id="tableWrapper">
+    <table id="resultTable">
+      <thead>
+        <tr>
+          <th>#</th>
+          <th>MAWB</th>
+          <th>驗證狀態</th>
+        </tr>
+      </thead>
+      <tbody></tbody>
+    </table>
+  </div>
+</div>
+
+<script>
+// 去除非數字
+function normalizeMawb(str) {
+  return (str || "").replace(/\D/g, "");
+}
+
+// IATA Check Digit
+function isValidIataMawb(mawb) {
+  const d = normalizeMawb(mawb);
+  if (d.length !== 11) return false;
+  const serial = parseInt(d.slice(3, 10), 10);
+  const check = parseInt(d.slice(10), 10);
+  return (serial % 7) === check;
+}
+
+// 支援任何貼上方式的 MAWB 清理器（含 3+8、3+4+4）
+function extractMawbList(rawText) {
+  const segments = rawText.match(/\d+/g) || [];
+  const result = [];
+
+  for (let i = 0; i < segments.length; i++) {
+    const s = segments[i];
+
+    if (s.length === 11) {
+      result.push(s);
+      continue;
+    }
+
+    if (s.length === 3 && i + 1 < segments.length && segments[i + 1].length === 8) {
+      result.push(s + segments[i + 1]);
+      i++;
+      continue;
+    }
+
+    if (
+      s.length === 3 &&
+      i + 2 < segments.length &&
+      segments[i + 1].length === 4 &&
+      segments[i + 2].length === 4
+    ) {
+      result.push(s + segments[i + 1] + segments[i + 2]);
+      i += 2;
+      continue;
+    }
+  }
+
+  return result;
+}
+
+// 智能判斷：單一 / 批量
+function smartCheck() {
+  const raw = document.getElementById("smartInput").value.trim();
+  const mawbs = extractMawbList(raw);
+
+  const singleDiv = document.getElementById("smartSingleResult");
+  const bulkDiv = document.getElementById("smartBulkResult");
+
+  singleDiv.innerHTML = "";
+  bulkDiv.innerHTML = "";
+
+  if (mawbs.length === 0) {
+    singleDiv.innerHTML = "<span class='bad'>❌ 找不到任何 MAWB</span>";
+    return;
+  }
+
+  if (mawbs.length === 1) {
+    const m = mawbs[0];
+    const ok = isValidIataMawb(m);
+
+    if (ok) {
+      singleDiv.innerHTML = `<span class='ok'>✔ 單一 MAWB 正確：${m}</span>`;
+      document.getElementById("startMawb").value = m;
+    } else {
+      singleDiv.innerHTML = `<span class='bad'>❌ MAWB 錯誤：${m}</span>`;
+    }
+    return;
+  }
+
+  let errors = [];
+  mawbs.forEach((m, index) => {
+    if (!isValidIataMawb(m)) {
+      errors.push(`${index + 1}. ${m}`);
+    }
+  });
+
+  if (errors.length === 0) {
+    bulkDiv.innerHTML = "<span class='ok'>✔ 全部 MAWB 正確</span>";
+  } else {
+    bulkDiv.innerHTML =
+      "<b class='bad'>以下 MAWB 有錯：</b><br>" +
+      errors.join("<br>");
+  }
+}
+
+// 跳號邏輯
+function nextMawbByRule(digits) {
+  let num = parseInt(digits, 10);
+  const lastDigit = num % 10;
+  num += (lastDigit === 6 ? 4 : 11);
+  return String(num).padStart(11, "0");
+}
+
+// 格式化 MAWB
+function formatMawb(digits) {
+  const prefix = digits.slice(0, 3);
+  const mid = digits.slice(3, 7);
+  const tail = digits.slice(7);
+
+  const mode = document.getElementById("formatSelect").value;
+
+  if (mode === "dash") return `${prefix}-${mid}${tail}`;
+  if (mode === "space") return `${prefix}-${mid} ${tail}`;
+  return digits;
+}
+
+let lastBatch = [];
+
+// 批量生成
+function generateBatch() {
+  const start = normalizeMawb(document.getElementById("startMawb").value);
+  const batchStatus = document.getElementById("batchStatus");
+  const tableWrapper = document.getElementById("tableWrapper");
+  const tbody = document.getElementById("resultTable").querySelector("tbody");
+  const downloadBtn = document.getElementById("downloadBtn");
+  const downloadPdfBtn = document.getElementById("downloadPdfBtn");
+
+  if (start.length !== 11 || !isValidIataMawb(start)) {
+    batchStatus.textContent = "❌ 起始 MAWB 錯誤或未驗證。";
+    batchStatus.className = "status bad";
+    tableWrapper.classList.add("hidden");
+    downloadBtn.classList.add("hidden");
+    downloadPdfBtn.classList.add("hidden");
+    return;
+  }
+
+  let count = parseInt(document.getElementById("count").value, 10);
+  const custom = document.getElementById("countCustom").value;
+  if (custom) {
+    const c = parseInt(custom, 10);
+    if (!isNaN(c) && c > 0) count = c;
+  }
+
+  lastBatch = [];
+  tbody.innerHTML = "";
+
+  let current = start;
+
+  for (let i = 0; i < count; i++) {
+    const valid = isValidIataMawb(current);
+    lastBatch.push(current);
+
+    const tr = document.createElement("tr");
+    tr.innerHTML = `
+      <td>${i + 1}</td>
+      <td>${formatMawb(current)}</td>
+      <td style="color:${valid ? '#7CFC00' : '#ff6347'}">
+        ${valid ? "✔ 正確" : "❌ 錯誤"}
+      </td>
+    `;
+    tbody.appendChild(tr);
+
+    current = nextMawbByRule(current);
+  }
+
+  batchStatus.textContent = `✔ 已生成 ${count} 個 MAWB`;
+  batchStatus.className = "status ok";
+  tableWrapper.classList.remove("hidden");
+  downloadBtn.classList.remove("hidden");
+  downloadPdfBtn.classList.remove("hidden");
+}
+
+// CSV 下載（保留 prefix 0）
+function downloadCSV() {
+  let csv = "MAWB\n";
+  lastBatch.forEach(m => {
+    csv += `"\'${formatMawb(m)}"\n`;
+  });
+
+  const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = "MAWB_List.csv";
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+}
+
+// PDF 下載（藍色）
+function downloadPDF() {
+  let html = `
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>MAWB PDF</title>
+<style>
+  body { font-family: Consolas; padding: 20px; color: #007bff; }
+  h1 { color: #0056b3; }
+  table { width: 100%; border-collapse: collapse; margin-top: 10px; }
+  th, td { border: 1px solid #999; padding: 4px 6px; text-align: left; }
+  th { background: #e6f0ff; }
+</style>
+</head>
+<body>
+<h1>MAWB 列表</h1>
+<table>
+<thead><tr><th>#</th><th>MAWB</th></tr></thead>
+<tbody>
+`;
+
+  lastBatch.forEach((m, idx) => {
+    html += `<tr><td>${idx + 1}</td><td>${formatMawb(m)}</td></tr>`;
+  });
+
+  html += `
+</tbody>
+</table>
+</body>
+</html>
+`;
+
+  const win = window.open("", "_blank");
+  win.document.open();
+  win.document.write(html);
+  win.document.close();
+}
+</script>
+</body>
+</html>
